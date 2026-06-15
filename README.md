@@ -68,13 +68,7 @@ The language model never invents probabilities or numerical model deltas. It ext
 
 ## Documentation
 
-- [Implementation plan](docs/implementation-plan.md)
-- [Hackathon entry plan](docs/hackathon-entry.md)
 - [Research synthesis](docs/research.md)
-- [Field notes](docs/field-notes.md)
-- [Demo script](docs/demo-script.md)
-- [Social post draft](docs/social-post.md)
-- [Post-hackathon roadmap](ROADMAP.md)
 - [Market-data source review](docs/market-data-source-review.md)
 
 ## Run Locally

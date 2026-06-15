@@ -5,7 +5,6 @@
   "base_model_url": "https://huggingface.co/bartowski/SmolLM2-360M-Instruct-GGUF",
   "adapter_url": "https://huggingface.co/sammoftah/underdog-lab-smollm2-360m-lora",
   "dataset_url": "https://huggingface.co/datasets/sammoftah/underdog-lab-scenarios",
-  "field_notes_url": "https://github.com/OsamaMoftah/World-Cup-2026-predicition/blob/main/docs/field-notes.md",
   "live_forecast_path": "predictions/live/2026-06-13T190000Z-WC26-008",
   "base_model_parameters": 360000000,
   "parameter_limit": 32000000000,
