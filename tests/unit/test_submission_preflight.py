@@ -51,9 +51,6 @@ def _root(tmp_path):
     for path in (
         "README.md",
         "LICENSE",
-        "docs/field-notes.md",
-        "docs/demo-script.md",
-        "docs/social-post.md",
         "data/scenarios/README.md",
     ):
         destination = tmp_path / path

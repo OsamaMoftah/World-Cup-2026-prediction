@@ -39,7 +39,6 @@
     "adapter_url": "https://huggingface.co/sammoftah/underdog-lab-smollm2-360m-lora",
     "base_model_url": "https://huggingface.co/bartowski/SmolLM2-360M-Instruct-GGUF",
     "dataset_url": "https://huggingface.co/datasets/sammoftah/underdog-lab-scenarios",
-    "field_notes_url": "https://github.com/OsamaMoftah/World-Cup-2026-predicition/blob/main/docs/field-notes.md",
     "github_url": "https://github.com/OsamaMoftah/World-Cup-2026-predicition",
     "space_url": "https://huggingface.co/spaces/build-small-hackathon/World-Cup-2026-predicition"
   }

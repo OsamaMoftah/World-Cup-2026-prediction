@@ -93,9 +93,6 @@ def evaluate_preflight(
     required_docs = (
         "README.md",
         "LICENSE",
-        "docs/field-notes.md",
-        "docs/demo-script.md",
-        "docs/social-post.md",
         "data/scenarios/README.md",
     )
     checks = {

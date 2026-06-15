@@ -43,7 +43,7 @@ The generated source of truth is `results/submission_preflight.json`.
   `release/submission.json`.
 - [x] Complete one mobile-width smoke test and record its timestamp.
 - [ ] Record and publish the 60-90 second demo; add `demo_video_url`.
-- [ ] Publish `docs/social-post.md`; add `social_post_url`.
+- [ ] Publish the public social post; add `social_post_url`.
 - [ ] Submit on the hackathon platform; add `hackathon_submission_url`.
 - [ ] Re-run `make release-preflight`; it must print `READY_TO_SUBMIT`.
 - [ ] Record the final GitHub and Space revision in the submission form.
