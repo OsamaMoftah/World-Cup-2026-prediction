@@ -1,0 +1,102 @@
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+from underdog_lab.world_cup.data import TournamentRepository
+from underdog_lab.world_cup.providers import normalize_football_data_response
+
+
+FIXTURE = Path(__file__).parents[1] / "fixtures" / "football_data_wc2026.json"
+FROZEN_SNAPSHOT = Path(__file__).parents[1] / "fixtures" / "world_cup" / "current_snapshot.json"
+
+
+def test_provider_response_maps_to_audited_update():
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    mapping = json.loads(
+        Path("data/world_cup_2026/provider_mappings/football_data.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    result = normalize_football_data_response(
+        payload,
+        TournamentRepository(snapshot_path=FROZEN_SNAPSHOT),
+        mapping["aliases"],
+        fetched_at=datetime(2026, 6, 14, 20, tzinfo=timezone.utc),
+    )
+
+    assert result["results"][0]["fixture_id"] == "WC26-025"
+    assert result["results"][0]["home_goals"] == 2
+    assert result["raw_response_sha256"]
+
+
+def test_finished_match_without_score_is_skipped_not_fatal():
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    payload["matches"].append(
+        {
+            "id": 900026,
+            "utcDate": "2026-06-14T23:00:00Z",
+            "status": "FINISHED",
+            "stage": "GROUP_STAGE",
+            "group": "GROUP_E",
+            "lastUpdated": "2026-06-14T23:05:00Z",
+            "homeTeam": {"id": 3, "name": "Ivory Coast"},
+            "awayTeam": {"id": 4, "name": "Ecuador"},
+            "score": {"duration": "REGULAR", "fullTime": {"home": None, "away": None}},
+        }
+    )
+    mapping = json.loads(
+        Path("data/world_cup_2026/provider_mappings/football_data.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    result = normalize_football_data_response(
+        payload,
+        TournamentRepository(snapshot_path=FROZEN_SNAPSHOT),
+        mapping["aliases"],
+        fetched_at=datetime(2026, 6, 15, 1, tzinfo=timezone.utc),
+    )
+
+    assert result["unscored_finished"] == ["WC26-026"]
+    assert result["results"][0]["fixture_id"] == "WC26-025"
+
+
+def test_alias_table_covers_every_internal_team():
+    mapping = json.loads(
+        Path("data/world_cup_2026/provider_mappings/football_data.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    internal = {team.team for team in TournamentRepository().teams}
+
+    assert internal <= set(mapping["aliases"].values())
+
+
+def test_provider_response_accepts_reversed_orientation_and_nested_season():
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    payload.pop("season")
+    match = payload["matches"][0]
+    match["season"] = {"startDate": "2026-06-11", "endDate": "2026-07-19"}
+    match["homeTeam"], match["awayTeam"] = match["awayTeam"], match["homeTeam"]
+    score = match["score"]["fullTime"]
+    score["home"], score["away"] = score["away"], score["home"]
+    mapping = json.loads(
+        Path("data/world_cup_2026/provider_mappings/football_data.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    result = normalize_football_data_response(
+        payload,
+        TournamentRepository(snapshot_path=FROZEN_SNAPSHOT),
+        mapping["aliases"],
+        fetched_at=datetime(2026, 6, 14, 20, tzinfo=timezone.utc),
+    )
+
+    assert result["results"][0]["home"] == "Germany"
+    assert result["results"][0]["home_goals"] == 2
+    assert (
+        result["mapping_discovery"]["provider_match_ids"]["900025"]
+        == "WC26-025"
+    )

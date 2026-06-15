@@ -1,0 +1,249 @@
+from __future__ import annotations
+
+import html
+
+from underdog_lab.domain import Forecast, MatchRecord
+from underdog_lab.forecasting.scoring import brier_score, log_loss
+from underdog_lab.scenarios.schemas import AdjustmentResult, ScenarioExtraction
+from underdog_lab.world_cup.flags import team_label
+
+
+def _format_cutoff(cutoff_iso: str) -> str:
+    if not cutoff_iso:
+        return ""
+    return cutoff_iso[:16].replace("T", " ") + " UTC"
+
+
+def hero_html(extractor_name: str, cutoff: str = "", overdue_note: str = "") -> str:
+    meta_bits = []
+    if cutoff:
+        meta_bits.append(f"Forecasts last updated {_format_cutoff(cutoff)}")
+    if overdue_note and overdue_note != "All recorded results are up to date.":
+        meta_bits.append(overdue_note)
+    meta_html = (
+        f'<div class="cutoff-badge">{html.escape(" · ".join(meta_bits))}</div>'
+        if meta_bits
+        else ""
+    )
+    return f"""
+    <section class="hero">
+      <div class="eyebrow">FIFA World Cup 2026 · Forecast Dashboard</div>
+      <h1>World Cup 2026 Forecaster</h1>
+      <p>Every group match, a full tournament simulation, and a sandbox where
+      you can drop in a headline like "star striker is out" and watch the
+      odds move.</p>
+      <p class="small">Built on Elo ratings and a statistical model, checked
+      against a decade of real results. This is a hobby project, not betting
+      advice or an official FIFA product. The <strong>Methodology</strong>
+      tab has the full breakdown if you're curious.</p>
+      {meta_html}
+      <div class="metric-strip">
+        <span class="metric-pill"><strong>Coverage</strong> 48 teams · 72 group matches</span>
+        <span class="metric-pill"><strong>Model</strong> Elo + Dixon-Coles statistics</span>
+        <span class="metric-pill"><strong>Scenario reader</strong> {html.escape(extractor_name)}, runs locally</span>
+      </div>
+    </section>
+    """
+
+
+def match_html(match: MatchRecord) -> str:
+    venue = "Neutral venue" if match.neutral_venue else "Recorded venue advantage"
+    return f"""
+    <section class="match-card">
+      <div class="match-meta">{html.escape(match.competition)} / {html.escape(match.stage)} / {match.kickoff_date.year}</div>
+      <div class="teams">
+        <div class="team">{team_label(match.home_team)}</div>
+        <div class="versus">VS</div>
+        <div class="team">{team_label(match.away_team)}</div>
+      </div>
+      <p class="context">{html.escape(match.context)}</p>
+      <div class="small">{html.escape(match.venue)} / {venue}</div>
+    </section>
+    """
+
+
+def forecast_html(
+    forecast: Forecast,
+    match: MatchRecord,
+    title: str,
+    *,
+    comparison: Forecast | None = None,
+) -> str:
+    values = (
+        ("home", match.home_team, forecast.p_home, "home-fill"),
+        ("draw", "Draw", forecast.p_draw, "draw-fill"),
+        ("away", match.away_team, forecast.p_away, "away-fill"),
+    )
+    rows = []
+    for outcome, label, probability, css_class in values:
+        delta = ""
+        if comparison is not None:
+            before = getattr(comparison, f"p_{outcome}")
+            change = probability - before
+            delta = f" ({change:+.1%})"
+        label_html = team_label(label) if outcome != "draw" else html.escape(label)
+        rows.append(
+            f"""
+            <div class="prob-row">
+              <div class="prob-label">{label_html}</div>
+              <div class="prob-track"><div class="prob-fill {css_class}" style="width:{probability * 100:.1f}%"></div></div>
+              <div class="prob-value">{probability:.0%}{delta}</div>
+            </div>
+            """
+        )
+    return f"""
+    <section class="forecast-card">
+      <div class="eyebrow">{html.escape(title)}</div>
+      {''.join(rows)}
+      <div class="forecast-note">
+        Expected goals: {match.home_team} {forecast.lambda_home:.2f},
+        {match.away_team} {forecast.lambda_away:.2f}. Most likely score:
+        {forecast.most_likely_score}.
+      </div>
+    </section>
+    """
+
+
+def factors_html(
+    extraction: ScenarioExtraction,
+    result: AdjustmentResult,
+    *,
+    backend: str | None = None,
+    backend_error: str | None = None,
+) -> str:
+    backend_block = ""
+    if backend:
+        degraded = "fallback" in backend.lower()
+        css_class = "factor-chip dropped" if degraded else "factor-chip"
+        backend_block = f"""
+        <div class="{css_class}">
+          <div class="factor-title">Extracted by {html.escape(backend)}</div>
+          <div class="factor-detail">{
+              "The local model was unavailable; deterministic rules handled this request."
+              if degraded
+              else "Local grammar-constrained model inference."
+          }</div>
+        </div>
+        """
+        if degraded and backend_error:
+            backend_block += (
+                '<p class="warning">Runtime fallback reason: '
+                + html.escape(backend_error)
+                + "</p>"
+            )
+
+    if not extraction.factors and not extraction.unsupported_claims:
+        return f"""
+        <section class="factor-card">
+          <div class="eyebrow">Scenario evidence</div>
+          <div class="factor-grid">{backend_block}</div>
+          <p class="context">No supported factor was detected.</p>
+        </section>
+        """
+
+    chips = []
+    for applied in result.adjustments:
+        factor = applied.factor
+        state = "" if applied.applied else " dropped"
+        status = "Applied" if applied.applied else "Not applied"
+        chips.append(
+            f"""
+            <div class="factor-chip{state}">
+              <div class="factor-title">{html.escape(factor.factor_type.value.replace("_", " ").title())} / {factor.team}</div>
+              <div class="factor-detail">
+                Severity {factor.severity:.0%}, certainty {factor.certainty:.0%}.
+                {status}: {html.escape(applied.explanation)}
+              </div>
+            </div>
+            """
+        )
+    unsupported = ""
+    if extraction.unsupported_claims:
+        unsupported = (
+            '<p class="warning">Unsupported: '
+            + html.escape("; ".join(extraction.unsupported_claims))
+            + "</p>"
+        )
+    ambiguities = ""
+    if extraction.ambiguities:
+        ambiguities = (
+            '<p class="warning">Ambiguous: '
+            + html.escape("; ".join(extraction.ambiguities))
+            + "</p>"
+        )
+    return f"""
+    <section class="factor-card">
+      <div class="eyebrow">Scenario evidence</div>
+      <div class="factor-grid">{backend_block}{''.join(chips)}</div>
+      {unsupported}{ambiguities}
+    </section>
+    """
+
+
+def reveal_html(
+    match: MatchRecord,
+    baseline: Forecast,
+    adjusted: Forecast,
+    user_home: float,
+    user_draw: float,
+) -> str:
+    user_away = 100.0 - user_home - user_draw
+    if user_away < 0:
+        return """
+        <section class="reveal-card">
+          <p class="warning">Home and draw probabilities exceed 100%.
+          Reduce one slider before committing.</p>
+        </section>
+        """
+
+    from underdog_lab.domain import UserForecast
+
+    user = UserForecast(
+        p_home=user_home / 100.0,
+        p_draw=user_draw / 100.0,
+        p_away=user_away / 100.0,
+    )
+    observed = match.observed_outcome
+    scores = (
+        ("Baseline", log_loss(baseline, observed), brier_score(baseline, observed)),
+        ("Scenario", log_loss(adjusted, observed), brier_score(adjusted, observed)),
+        ("You", log_loss(user, observed), brier_score(user, observed)),
+    )
+    boxes = "".join(
+        f"""
+        <div class="score-box">
+          <span>{name}</span>
+          <strong>{loss:.3f}</strong>
+          <span class="small">log loss / Brier {brier:.3f}</span>
+        </div>
+        """
+        for name, loss, brier in scores
+    )
+    return f"""
+    <section class="reveal-card">
+      <div class="eyebrow">Result revealed</div>
+      <div class="result">{team_label(match.home_team)} {match.home_goals}-{match.away_goals} {team_label(match.away_team)}</div>
+      <p class="context">{html.escape(match.reveal_notes or "")}</p>
+      <div class="score-grid">{boxes}</div>
+      <p class="small">Lower scores are better. A surprising outcome does not
+      by itself invalidate a calibrated forecast.</p>
+    </section>
+    """
+
+
+def derived_away_html(home: float, draw: float) -> str:
+    away = 100.0 - home - draw
+    tone = "warning" if away < 0 else "context"
+    value = max(0.0, away)
+    message = (
+        "Reduce home or draw; the total is above 100%."
+        if away < 0
+        else "The third probability is derived so the forecast totals 100%."
+    )
+    return f"""
+    <section class="forecast-card">
+      <div class="eyebrow">Your away probability</div>
+      <div class="result">{value:.0f}%</div>
+      <p class="{tone}">{message}</p>
+    </section>
+    """

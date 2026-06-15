@@ -1,0 +1,51 @@
+name: Deploy Hugging Face Space
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hugging-face-space
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HF_SPACE: build-small-hackathon/World-Cup-2026-predicition
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          lfs: true
+      - name: Report missing deployment configuration
+        if: env.HF_TOKEN == ''
+        run: |
+          echo "::warning::HF_TOKEN is not configured; production deployment did not run."
+          echo "deployment_status=not_configured" >> "$GITHUB_STEP_SUMMARY"
+      - name: Push exact revision to Space
+        if: env.HF_TOKEN != ''
+        run: |
+          git fetch \
+            "https://sammoftah:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" \
+            main:refs/remotes/hugging-face/main
+          git merge-base --is-ancestor \
+            refs/remotes/hugging-face/main HEAD
+          git push "https://sammoftah:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" \
+            HEAD:main
+      - name: Verify deployed runtime revision
+        if: env.HF_TOKEN != ''
+        run: |
+          python scripts/verify_space_revision.py \
+            --space "$HF_SPACE" \
+            --expected "$(git rev-parse HEAD)" \
+            --url https://build-small-hackathon-world-cup-2026-predicition.hf.space \
+            --timeout 600
