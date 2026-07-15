@@ -19,3 +19,14 @@ def test_result_workflow_keeps_human_review_gate():
     assert "peter-evans/create-pull-request" in workflow
     assert "--allow-corrections" in workflow
     assert "health_check.py --ignore-overdue-results" in workflow
+
+
+def test_deploy_workflow_fails_when_token_is_missing():
+    workflow = Path(".github/workflows/deploy-space.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Validate deployment configuration" in workflow
+    assert 'echo "::error::HF_TOKEN is not configured."' in workflow
+    assert "exit 1" in workflow
+    assert "if: env.HF_TOKEN != ''" not in workflow

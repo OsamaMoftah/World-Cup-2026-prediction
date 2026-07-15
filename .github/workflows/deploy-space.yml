@@ -26,13 +26,14 @@ jobs:
         with:
           fetch-depth: 0
           lfs: true
-      - name: Report missing deployment configuration
-        if: env.HF_TOKEN == ''
+      - name: Validate deployment configuration
         run: |
-          echo "::warning::HF_TOKEN is not configured; production deployment did not run."
-          echo "deployment_status=not_configured" >> "$GITHUB_STEP_SUMMARY"
+          if [ -z "$HF_TOKEN" ]; then
+            echo "::error::HF_TOKEN is not configured."
+            echo "deployment_status=blocked_missing_token" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
       - name: Push exact revision to Space
-        if: env.HF_TOKEN != ''
         run: |
           git fetch \
             "https://sammoftah:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" \
@@ -42,7 +43,6 @@ jobs:
           git push "https://sammoftah:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" \
             HEAD:main
       - name: Verify deployed runtime revision
-        if: env.HF_TOKEN != ''
         run: |
           python scripts/verify_space_revision.py \
             --space "$HF_SPACE" \
