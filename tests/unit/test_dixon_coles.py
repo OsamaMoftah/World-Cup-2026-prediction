@@ -65,3 +65,11 @@ def test_top_scorelines_are_ranked_and_normalized_to_score_grid():
     assert len(scorelines) == 3
     assert scorelines[0][1] >= scorelines[1][1] >= scorelines[2][1]
     assert all(0.0 < probability < 1.0 for _, probability in scorelines)
+
+
+def test_most_likely_score_is_global_score_matrix_mode():
+    forecast = forecast_from_lambdas_dc(1.4, 1.1, -0.08)
+    scorelines = top_scorelines_dc(1.4, 1.1, -0.08, limit=3)
+
+    assert forecast.most_likely_score == scorelines[0][0]
+    assert forecast.most_likely_score == "1-1"

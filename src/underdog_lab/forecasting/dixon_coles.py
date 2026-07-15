@@ -9,14 +9,6 @@ from underdog_lab.forecasting.elo_goals import EloGoalModel
 from underdog_lab.forecasting.poisson import poisson_probability
 
 
-def _outcome(home_goals: int, away_goals: int) -> str:
-    if home_goals > away_goals:
-        return "home"
-    if home_goals < away_goals:
-        return "away"
-    return "draw"
-
-
 def dc_tau(home_goals: int, away_goals: int, lambda_home: float, lambda_away: float, rho: float) -> float:
     """Dixon-Coles (1997) low-score correlation correction.
 
@@ -61,13 +53,11 @@ def forecast_from_lambdas_dc(
     p_draw = sum(matrix[i][i] for i in range(max_score + 1))
     p_away = total - p_home - p_draw
 
-    dominant = max(("home", "draw", "away"), key={"home": p_home, "draw": p_draw, "away": p_away}.get)
     best_i, best_j = max(
         (
             (i, j)
             for i in range(max_score + 1)
             for j in range(max_score + 1)
-            if _outcome(i, j) == dominant
         ),
         key=lambda score: matrix[score[0]][score[1]],
     )

@@ -59,6 +59,12 @@ def _fixture_card(
     *,
     mode: str,
 ) -> str:
+    scorelines = top_scorelines(forecast)
+    best_score, best_score_probability = scorelines[0]
+    scoreline_summary = ", ".join(
+        f"{html.escape(score)} ({probability:.0%})"
+        for score, probability in scorelines
+    )
     if normalize_forecast_view(mode) == "compact":
         leading, runner_up, _ = _leading_outcomes(fixture, forecast)
         outcome, probability, label = leading
@@ -67,11 +73,6 @@ def _fixture_card(
         signal_label = confidence_tier(probability, margin)
         result_label = label if clear_favorite else (
             f"{label} / {runner_up[2]}"
-        )
-        scoreline = forecast.most_likely_score
-        scoreline_summary = ", ".join(
-            f"{html.escape(score)} ({probability:.0%})"
-            for score, probability in top_scorelines(forecast)
         )
         pick_class = f"pick-pill {outcome}"
         return f"""
@@ -85,8 +86,10 @@ def _fixture_card(
                 <div class="team">{team_label(fixture.away)}</div>
               </div>
               <div class="forecast-note">
-                Score-matrix mode: {html.escape(scoreline)}. Top uncalibrated
-                scorelines: {scoreline_summary}
+                Most likely exact score:
+                <strong>{html.escape(best_score)}</strong>
+                ({best_score_probability:.0%}). Top three scorelines:
+                {scoreline_summary}
               </div>
             </div>
             <div class="{pick_class}">
@@ -126,11 +129,13 @@ def _fixture_card(
           </div>
         </div>
         <div class="pick-summary">
-          <div class="pick-label">Score-matrix mode</div>
-          <div class="pick-result">{html.escape(forecast.most_likely_score)}</div>
+          <div class="pick-label">Most likely exact score</div>
+          <div class="pick-result">{html.escape(best_score)}</div>
+          <div class="signal-detail">{best_score_probability:.0%} probability</div>
         </div>
       </div>
       {''.join(rows)}
+      <div class="forecast-note">Top three scorelines: {scoreline_summary}</div>
     </div>
     """
 
