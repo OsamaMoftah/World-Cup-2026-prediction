@@ -215,6 +215,12 @@ footer {
   margin-bottom: 0;
 }
 
+/* Player Awards uses a flatter editorial surface; the stat panels already
+   provide the visual hierarchy inside each card. */
+.player-awards-section {
+  box-shadow: none !important;
+}
+
 .match-card:hover,
 .forecast-card:hover,
 .lab-card:hover {

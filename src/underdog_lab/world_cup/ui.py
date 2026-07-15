@@ -159,7 +159,7 @@ def upcoming_html(repository: "TournamentRepository", mode: str = "probability")
 
     if not upcoming:
         return """
-        <section class="lab-card">
+        <section class="lab-card player-awards-section">
           <div class="eyebrow">Upcoming matches</div>
           <h2>No resolved fixture is next</h2>
           <p class="context">The live bracket is complete through the semifinal. The final forecast below is conditional on semifinal 2.</p>
@@ -395,7 +395,7 @@ def group_html(repository: TournamentRepository, group: str) -> str:
             """
         )
     return f"""
-    <section class="lab-card">
+    <section class="lab-card player-awards-section">
       <div class="eyebrow">Group {html.escape(group)}</div>
       <h2>Table and match forecasts</h2>
       <div class="table-scroll">
@@ -571,7 +571,7 @@ def _award_section_html(
 ) -> str:
     if not rows:
         return f"""
-        <section class="lab-card">
+        <section class="lab-card player-awards-section">
           <div class="eyebrow">Player awards</div>
           <h2>{html.escape(title)}</h2>
           <p class="context">{html.escape(description)}</p>
@@ -584,7 +584,7 @@ def _award_section_html(
         for rank, row in enumerate(rows, start=1)
     )
     return f"""
-    <section class="lab-card">
+    <section class="lab-card player-awards-section">
       <div class="eyebrow">Player awards</div>
       <h2>{html.escape(title)}</h2>
       <p class="context">{html.escape(description)}</p>
@@ -599,7 +599,7 @@ def awards_html(
 ) -> str:
     rankings = award_predictions(probabilities)
     intro = f"""
-    <section class="lab-card" style="border-color:rgba(178,34,52,.25)">
+    <section class="lab-card player-awards-section" style="border-color:rgba(178,34,52,.25)">
       <div class="eyebrow">Player awards</div>
       <h2>Who wins the 2026 individual prizes?</h2>
       <p class="context">35 contenders for the tournament's four big

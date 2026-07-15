@@ -123,6 +123,19 @@ def test_awards_intro_renders_glossary_instead_of_template_placeholders():
     assert "How to read the cards" in html
 
 
+def test_player_awards_sections_opt_out_of_global_card_shadow():
+    from underdog_lab.world_cup.simulation import simulate_tournament
+    from underdog_lab.world_cup.ui import awards_html
+
+    repository = TournamentRepository()
+    html = awards_html(repository, simulate_tournament(repository, iterations=2))
+    css = Path("src/underdog_lab/ui/theme.py").read_text(encoding="utf-8")
+
+    assert html.count("player-awards-section") >= 5
+    assert ".player-awards-section" in css
+    assert "box-shadow: none" in css
+
+
 def test_repository_contains_full_group_stage():
     repository = TournamentRepository()
 
