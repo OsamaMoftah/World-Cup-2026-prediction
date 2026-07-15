@@ -639,6 +639,10 @@ tbody tr:hover {
   background: var(--red-soft);
 }
 
+.estimated-attributes {
+  position: relative;
+}
+
 .ovr-value {
   color: var(--red-dark);
   font-size: 21px;
@@ -654,6 +658,47 @@ tbody tr:hover {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.ovr-label {
+  color: var(--red-dark);
+}
+
+.model-form {
+  color: var(--blue-dark, #24547a);
+}
+
+.model-form-label {
+  display: inline-block;
+  margin-right: 4px;
+  color: var(--blue-dark, #24547a);
+  font-size: 9px;
+  letter-spacing: 0.07em;
+}
+
+.rating-layer-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 2px 0 8px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--red-dark);
+  font-family: 'Geist Mono', monospace !important;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rating-layer-label small {
+  color: var(--ink-muted);
+  font-family: 'Geist', sans-serif !important;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .player-name {
@@ -673,6 +718,60 @@ tbody tr:hover {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px 12px;
+}
+
+.stat-methodology {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-soft);
+  border-left: 3px solid var(--red);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 250, 247, 0.8);
+}
+
+.stat-methodology-title {
+  color: var(--ink);
+  font-family: 'Geist Mono', monospace !important;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stat-methodology-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.stat-methodology-item {
+  display: grid;
+  gap: 3px;
+  padding-left: 9px;
+  border-left: 2px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.stat-methodology-item strong {
+  color: var(--red-dark);
+  font-size: 12px;
+}
+
+.stat-methodology-item.model-form {
+  border-left-color: var(--blue);
+}
+
+.stat-methodology-item.model-form strong {
+  color: var(--blue-dark, #24547a);
+}
+
+@media (max-width: 640px) {
+  .stat-methodology-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stat-top {

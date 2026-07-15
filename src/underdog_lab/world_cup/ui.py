@@ -479,17 +479,21 @@ def _player_card_html(rank: int, row: dict, *, rating_key: str, rating_label: st
     <div class="player-card">
       <div class="player-card-head">
         {player_photo_html(row["name"])}
-        <div class="ovr-badge">
+        <div class="ovr-badge estimated-attributes" title="Estimated from public player ratings; not licensed EA data">
           <span class="ovr-value">{row[rating_key]}</span>
-          <span class="ovr-label">{rating_label}</span>
+          <span class="ovr-label">EST. {rating_label}</span>
         </div>
         <div class="player-card-meta">
-          <div class="player-rank">#{rank} &middot; Form rating {row["form_rating"]}/99</div>
+          <div class="player-rank model-form"><span class="model-form-label">MODEL FORM</span> #{rank} &middot; {row["form_rating"]}/99</div>
           <div class="player-name">{html.escape(row["name"])}</div>
           <div class="player-team">{team_label(row["team"])} &middot; {html.escape(row["position"])}</div>
         </div>
       </div>
-      <div class="player-stats">{stat_cells}</div>
+      <div class="rating-layer-label estimated-attributes">
+        <span>Estimated attributes</span>
+        <small>public rating synthesis</small>
+      </div>
+      <div class="player-stats estimated-attributes">{stat_cells}</div>
     </div>
     """
 
@@ -519,6 +523,24 @@ def player_stat_legend_html() -> str:
     <section class="stat-legend" aria-label="Player card abbreviations">
       <strong class="stat-legend-title">Card key</strong>
       <div class="stat-legend-grid">{items}</div>
+    </section>
+    """
+
+
+def player_stat_methodology_html() -> str:
+    return """
+    <section class="stat-methodology" aria-label="Player card methodology">
+      <div class="stat-methodology-title">How to read the cards</div>
+      <div class="stat-methodology-grid">
+        <div class="stat-methodology-item estimated-attributes">
+          <strong>Estimated attributes</strong>
+          <span>OVR, POT and the six attribute bars are reconstructed from public player ratings. They are estimates, not licensed EA data.</span>
+        </div>
+        <div class="stat-methodology-item model-form">
+          <strong>Model form</strong>
+          <span>The blue form signal combines those estimates with the tournament simulation's projected team run. It is our ranking signal, not a player rating.</span>
+        </div>
+      </div>
     </section>
     """
 
@@ -567,11 +589,12 @@ def awards_html(
       <p class="context">35 contenders for the tournament's four big
       individual prizes, laid out as EA FC-style cards. The OVR/POT badge and
       PAC/SHO/PAS/DRI/DEF/PHY ratings are our own estimates based on public
-      player ratings, not licensed EA data. The form rating under each name
+      player ratings, not licensed EA data. The model form signal under each name
       blends those ratings with how far the bracket simulation above expects
       that player's team to go. Treat it as a shortlist ranking, not a
       betting line or an official FIFA prediction.</p>
       {player_stat_legend_html()}
+      {player_stat_methodology_html()}
     </section>
     """
     return intro + "".join(

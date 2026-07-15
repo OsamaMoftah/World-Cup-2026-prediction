@@ -66,6 +66,34 @@ def test_player_stat_legend_defines_card_abbreviations():
         assert f">{label}</strong>" in html
 
 
+def test_player_cards_separate_estimated_attributes_from_model_form():
+    from underdog_lab.world_cup.ui import _player_card_html, player_stat_methodology_html
+
+    row = {
+        "name": "Example Player",
+        "team": "Spain",
+        "position": "FW",
+        "form_rating": 84,
+        "overall_rating": 91,
+        "attributes": {
+            "pace": 90,
+            "shooting": 88,
+            "passing": 82,
+            "dribbling": 89,
+            "defending": 40,
+            "physical": 78,
+        },
+    }
+
+    card = _player_card_html(1, row, rating_key="overall_rating", rating_label="OVR")
+    methodology = player_stat_methodology_html()
+
+    assert "estimated-attributes" in card
+    assert "model-form" in card
+    assert "not licensed EA data" in methodology
+    assert "public player ratings" in methodology
+
+
 def test_repository_contains_full_group_stage():
     repository = TournamentRepository()
 
