@@ -484,16 +484,23 @@ def _player_card_html(rank: int, row: dict, *, rating_key: str, rating_label: st
           <span class="ovr-label">EST. {rating_label}</span>
         </div>
         <div class="player-card-meta">
-          <div class="player-rank model-form"><span class="model-form-label">MODEL FORM</span> #{rank} &middot; {row["form_rating"]}/99</div>
+          <div class="player-rank">#{rank} shortlist position</div>
           <div class="player-name">{html.escape(row["name"])}</div>
           <div class="player-team">{team_label(row["team"])} &middot; {html.escape(row["position"])}</div>
         </div>
       </div>
-      <div class="rating-layer-label estimated-attributes">
-        <span>Estimated attributes</span>
-        <small>public rating synthesis</small>
+      <div class="model-signal model-form">
+        <span class="model-signal-kicker">MODEL SIGNAL</span>
+        <strong>{row["form_rating"]}/99</strong>
+        <span class="model-signal-note">tournament context · projected team run</span>
       </div>
-      <div class="player-stats estimated-attributes">{stat_cells}</div>
+      <div class="attribute-panel estimated-attributes">
+        <div class="rating-layer-label">
+          <span>ESTIMATE · player attributes</span>
+          <small>public rating synthesis</small>
+        </div>
+        <div class="player-stats">{stat_cells}</div>
+      </div>
     </div>
     """
 

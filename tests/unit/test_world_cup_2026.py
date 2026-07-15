@@ -90,6 +90,10 @@ def test_player_cards_separate_estimated_attributes_from_model_form():
 
     assert "estimated-attributes" in card
     assert "model-form" in card
+    assert "attribute-panel" in card
+    assert "model-signal" in card
+    assert "ESTIMATE" in card
+    assert "MODEL SIGNAL" in card
     assert "not licensed EA data" in methodology
     assert "public player ratings" in methodology
 

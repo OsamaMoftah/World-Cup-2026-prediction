@@ -668,6 +668,41 @@ tbody tr:hover {
   color: var(--blue-dark, #24547a);
 }
 
+.model-signal {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: baseline;
+  gap: 8px;
+  margin: 2px 0 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(36, 137, 201, 0.34);
+  border-left: 4px solid var(--blue);
+  border-radius: var(--radius-sm);
+  background: var(--blue-soft);
+}
+
+.model-signal-kicker {
+  color: var(--blue-dark);
+  font-family: 'Geist Mono', monospace !important;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.model-signal strong {
+  color: var(--blue-dark);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.model-signal-note {
+  justify-self: end;
+  color: var(--blue-dark);
+  font-size: 10px;
+  font-weight: 600;
+  text-align: right;
+}
+
 .model-form-label {
   display: inline-block;
   margin-right: 4px;
@@ -699,6 +734,19 @@ tbody tr:hover {
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
+}
+
+.attribute-panel {
+  padding: 8px 10px 10px;
+  border: 1px solid rgba(214, 63, 77, 0.3);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 241, 243, 0.52);
+}
+
+.attribute-panel .rating-layer-label {
+  margin: 0 0 8px;
+  padding-top: 0;
+  border-top: 0;
 }
 
 .player-name {
@@ -769,6 +817,16 @@ tbody tr:hover {
 }
 
 @media (max-width: 640px) {
+  .model-signal {
+    grid-template-columns: auto auto;
+  }
+
+  .model-signal-note {
+    grid-column: 1 / -1;
+    justify-self: start;
+    text-align: left;
+  }
+
   .stat-methodology-grid {
     grid-template-columns: 1fr;
   }
