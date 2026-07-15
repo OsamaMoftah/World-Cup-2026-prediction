@@ -111,6 +111,18 @@ def test_player_glossary_is_compact_and_defines_core_and_goalkeeper_terms():
     assert "DIV" in glossary and "goalkeeper diving" in glossary
 
 
+def test_awards_intro_renders_glossary_instead_of_template_placeholders():
+    from underdog_lab.world_cup.simulation import simulate_tournament
+    from underdog_lab.world_cup.ui import awards_html
+
+    repository = TournamentRepository()
+    html = awards_html(repository, simulate_tournament(repository, iterations=2))
+
+    assert "{player_stat_legend_html()}" not in html
+    assert "Glossary · card abbreviations" in html
+    assert "How to read the cards" in html
+
+
 def test_repository_contains_full_group_stage():
     repository = TournamentRepository()
 

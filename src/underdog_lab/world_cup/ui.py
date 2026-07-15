@@ -598,7 +598,7 @@ def awards_html(
     probabilities: dict[str, dict[str, float]],
 ) -> str:
     rankings = award_predictions(probabilities)
-    intro = """
+    intro = f"""
     <section class="lab-card" style="border-color:rgba(178,34,52,.25)">
       <div class="eyebrow">Player awards</div>
       <h2>Who wins the 2026 individual prizes?</h2>
