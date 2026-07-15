@@ -25,6 +25,38 @@ from underdog_lab.world_cup.models import Standing
 from underdog_lab.world_cup.standings import calculate_standings, rank_standings
 
 
+def test_visitor_journeys_use_distinct_names_and_explanations():
+    from underdog_lab.ui.components import visitor_tab_copy
+
+    copy = visitor_tab_copy()
+
+    assert copy["challenge_title"] == "Beat the Model"
+    assert copy["evidence_title"] == "Evidence"
+    assert "frozen before kickoff" in copy["evidence_intro"]
+
+
+def test_challenge_intro_explains_the_four_step_flow():
+    from underdog_lab.ui.components import challenge_intro_html
+
+    html = challenge_intro_html()
+
+    assert "Beat the Model" in html
+    assert "Choose a past match" in html
+    assert "Add evidence" in html
+    assert "Commit probabilities" in html
+    assert "Reveal the result" in html
+
+
+def test_ui_uses_pills_only_for_compact_status_and_keeps_controls_consistent():
+    css = Path("src/underdog_lab/ui/theme.py").read_text(encoding="utf-8")
+
+    assert ".challenge-panel" in css
+    assert ".journey-intro" in css
+    assert ".status-chip" in css
+    assert ".metric-pill" in css
+    assert ".factor-chip" in css
+
+
 def test_repository_contains_full_group_stage():
     repository = TournamentRepository()
 

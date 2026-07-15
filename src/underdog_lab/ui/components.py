@@ -8,6 +8,58 @@ from underdog_lab.scenarios.schemas import AdjustmentResult, ScenarioExtraction
 from underdog_lab.world_cup.flags import team_label
 
 
+def visitor_tab_copy() -> dict[str, str]:
+    return {
+        "challenge_title": "Beat the Model",
+        "challenge_intro": (
+            "Test whether new information should change a football forecast. "
+            "Choose a past match, add evidence, commit your probabilities, then reveal the result."
+        ),
+        "evidence_title": "Evidence",
+        "evidence_intro": (
+            "Every World Cup forecast below was frozen before kickoff and scored "
+            "against the result. Proper scoring rules are the main evidence; "
+            "accuracy is a secondary, easier-to-read summary."
+        ),
+    }
+
+
+def challenge_intro_html() -> str:
+    return """
+    <section class="journey-intro challenge-intro">
+      <div class="eyebrow">20 curated historical matches</div>
+      <h2>Beat the Model</h2>
+      <p class="context">Test whether new information should change a football
+      forecast. This is a learning experiment, not a live betting tool.</p>
+      <ol class="journey-steps">
+        <li><strong>Choose a past match</strong><span>The result stays hidden.</span></li>
+        <li><strong>Add evidence</strong><span>Describe an injury, suspension or supported factor.</span></li>
+        <li><strong>Commit probabilities</strong><span>Home, draw and away total 100%.</span></li>
+        <li><strong>Reveal the result</strong><span>Compare the baseline, scenario and your forecast.</span></li>
+      </ol>
+    </section>
+    """
+
+
+def evidence_summary_html(records: dict) -> str:
+    coverage = records["coverage"]
+    return f"""
+    <section class="journey-intro evidence-intro">
+      <div class="eyebrow">Verified World Cup evidence</div>
+      <h2>What did the model say before kickoff?</h2>
+      <p class="context">Every World Cup forecast below was frozen before kickoff
+      and scored against the result. Log loss, Brier and RPS are the primary
+      evidence; top-pick accuracy is a familiar secondary summary.</p>
+      <div class="evidence-coverage">
+        <strong>{coverage['scored']} / {coverage['completed']}</strong>
+        <span>completed matches have eligible forecasts</span>
+      </div>
+      <p class="small">Excluded forecasts stay visible and are never silently
+      backfilled.</p>
+    </section>
+    """
+
+
 def _format_cutoff(cutoff_iso: str) -> str:
     if not cutoff_iso:
         return ""

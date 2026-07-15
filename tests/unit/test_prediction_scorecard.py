@@ -6,6 +6,35 @@ from underdog_lab.world_cup.data import TournamentRepository
 from underdog_lab.world_cup.predictions import _summarize, scored_track_records
 
 
+def test_evidence_summary_explains_freezing_and_proper_scores():
+    from underdog_lab.ui.components import evidence_summary_html
+
+    html = evidence_summary_html(
+        {
+            "coverage": {
+                "completed": 72,
+                "scored": 65,
+                "rate": 65 / 72,
+                "excluded": 7,
+            }
+        }
+    )
+
+    assert "frozen before kickoff" in html
+    assert "65 / 72" in html
+    assert "Log loss, Brier and RPS" in html
+    assert "Excluded forecasts stay visible" in html
+
+
+def test_track_record_labels_retrospective_replay_as_diagnostic():
+    from pathlib import Path
+
+    source = Path("src/underdog_lab/ui/app.py").read_text(encoding="utf-8")
+
+    assert "evidence_summary_html(records)" in source
+    assert "Retrospective diagnostic — not prospective evidence" in source
+
+
 def test_summary_reports_accuracy_and_log_loss_skill():
     summary = _summarize(
         [

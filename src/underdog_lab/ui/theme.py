@@ -20,6 +20,10 @@ CSS = """
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
+  --radius-xs: 6px;
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-pill: 999px;
 }
 
 * {
@@ -163,7 +167,7 @@ footer {
   gap: 7px;
   padding: 8px 12px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgba(255,255,255,0.78);
   color: var(--ink-soft);
   font-size: 13px;
@@ -198,7 +202,7 @@ footer {
   margin-bottom: 16px;
   padding: 20px 22px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-card);
   background: rgba(255,255,255,0.90);
   box-shadow: 0 10px 26px rgba(18, 104, 157, 0.08);
 }
@@ -215,6 +219,83 @@ footer {
 .forecast-card:hover,
 .lab-card:hover {
   border-color: var(--blue);
+}
+
+.journey-intro {
+  margin: 0 0 16px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--red);
+  border-radius: var(--radius-card);
+  background: rgba(255,255,255,0.94);
+}
+
+.journey-intro h2 {
+  margin-bottom: 8px;
+}
+
+.journey-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.journey-steps li {
+  padding: 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-control);
+  background: var(--blue-soft);
+}
+
+.journey-steps span {
+  display: block;
+  margin-top: 4px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.challenge-panel {
+  padding: 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-card);
+  background: rgba(255,255,255,0.55);
+}
+
+.evidence-coverage {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-control);
+  background: var(--blue-soft);
+}
+
+.evidence-coverage strong {
+  color: var(--red-dark);
+  font-size: 24px;
+}
+
+.evidence-coverage span {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--blue-soft);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .match-meta {
@@ -242,7 +323,7 @@ footer {
   flex: 0 0 auto;
   padding: 5px 13px;
   border: 1px solid rgba(214,63,77,0.28);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--red-soft);
   color: var(--red-dark);
   font-family: 'Geist Mono', monospace !important;
@@ -363,7 +444,7 @@ code {
   padding: 12px 14px;
   border: 1px solid rgba(36,137,201,0.28);
   border-left: 4px solid var(--blue);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   background: var(--blue-soft);
 }
 
@@ -485,7 +566,7 @@ tbody tr:hover {
 .player-card {
   padding: 15px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-card);
   background: #fff;
 }
 
@@ -604,7 +685,7 @@ tbody tr:hover {
 
 button,
 .primary-button {
-  border-radius: var(--radius-md) !important;
+  border-radius: var(--radius-control) !important;
   font-weight: 750 !important;
 }
 
@@ -630,7 +711,7 @@ input,
 textarea,
 select {
   border: 1px solid var(--line) !important;
-  border-radius: var(--radius-sm) !important;
+  border-radius: var(--radius-control) !important;
   background: #fff !important;
   color: var(--ink) !important;
   font-size: 15px !important;
@@ -717,6 +798,10 @@ label,
 }
 
 @media (max-width: 760px) {
+  .journey-steps {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .hero {
     padding: 30px 20px;
   }

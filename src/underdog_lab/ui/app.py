@@ -17,12 +17,15 @@ from underdog_lab.scenarios.schemas import ScenarioExtraction
 from underdog_lab.service import analyze_scenario, baseline_forecast
 from underdog_lab.telemetry.traces import append_trace
 from underdog_lab.ui.components import (
+    challenge_intro_html,
     derived_away_html,
+    evidence_summary_html,
     factors_html,
     forecast_html,
     hero_html,
     match_html,
     reveal_html,
+    visitor_tab_copy,
 )
 from underdog_lab.world_cup.comparison import (
     match_comparison_html,
@@ -300,27 +303,7 @@ def track_record_html(repository) -> str:
         </section>
         """
 
-    coverage = records["coverage"]
-    excluded = ", ".join(coverage["excluded_fixture_ids"])
-    intro = f"""
-    <section class="lab-card">
-      <div class="eyebrow">Track record</div>
-      <h2>How accurate have we been so far?</h2>
-      <p class="context">Every row below is a prediction we made and froze
-      <em>before</em> kickoff, compared against what actually happened.
-      Proper scoring rules are the primary measure; top-pick accuracy is shown
-      as a familiar secondary measure. Lower log loss, Brier, and RPS are
-      better. See the Methodology tab for the artifact audit.</p>
-      <div class="score-grid">
-        <div class="score-box"><span>Completed group matches</span><strong>{coverage['completed']}</strong></div>
-        <div class="score-box"><span>Verified forecasts scored</span><strong>{coverage['scored']}</strong></div>
-        <div class="score-box"><span>Prospective coverage</span><strong>{coverage['rate']:.1%}</strong></div>
-        <div class="score-box"><span>Excluded from scoring</span><strong>{coverage['excluded']}</strong></div>
-      </div>
-      <p class="small">Excluded because no valid pre-kickoff artifact exists:
-      {excluded}. Historical forecast files remain immutable.</p>
-    </section>
-    """
+    intro = evidence_summary_html(records)
 
     prospective_sections = "".join(
         section(
@@ -339,7 +322,7 @@ def track_record_html(repository) -> str:
     )
 
     return intro + aggregate + prospective_sections + section(
-        "If we replayed every match with today's model",
+        "Retrospective diagnostic — not prospective evidence",
         "This re-runs the current model over every match played so far. "
         "It's a useful diagnostic, but because it uses today's corrected "
         "ratings, treat it as 'how good is the current model', not as a "
@@ -574,6 +557,7 @@ cut, and how we audit ourselves, see the **Methodology** tab.
 
 initial_match = repository.by_label(labels[0])
 initial_baseline = baseline_forecast(initial_match)
+VISITOR_COPY = visitor_tab_copy()
 if world_cup_labels:
     initial_world_cup_label = world_cup_labels[0]
     initial_world_cup_fixture = world_cup_fixtures[initial_world_cup_label]
@@ -752,108 +736,111 @@ with gr.Blocks(title="World Cup 2026 Forecaster") as demo:
         with gr.Tab("Player Awards"):
             gr.HTML(awards_html(world_cup_repository, world_cup_probabilities))
 
-        with gr.Tab("Challenge"):
-            match_selector = gr.Dropdown(
-                choices=labels,
-                value=labels[0],
-                label="Hidden historical match",
-            )
-            match_card = gr.HTML(match_html(initial_match))
-            baseline_card = gr.HTML(
-                forecast_html(initial_baseline, initial_match, "Baseline forecast")
-            )
-
-            scenario = gr.Textbox(
-                label="What changes before kickoff?",
-                placeholder=(
-                    "Example: Argentina's first-choice striker is confirmed out."
-                ),
-                lines=3,
-            )
-            with gr.Row():
-                analyze_button = gr.Button(
-                    "Translate scenario", variant="primary", elem_classes="primary-button"
+        with gr.Tab(VISITOR_COPY["challenge_title"]):
+            gr.HTML(challenge_intro_html())
+            with gr.Column(elem_classes="challenge-panel"):
+                match_selector = gr.Dropdown(
+                    choices=labels,
+                    value=labels[0],
+                    label="Choose a past match",
+                    info="The final score is hidden until you commit your forecast.",
                 )
-                clear_button = gr.ClearButton(
-                    [scenario], value="Clear", elem_classes="secondary-button"
+                match_card = gr.HTML(match_html(initial_match))
+                baseline_card = gr.HTML(
+                    forecast_html(initial_baseline, initial_match, "Baseline forecast")
                 )
 
-            factors_card = gr.HTML(
-                factors_html(
-                    ScenarioExtraction(),
-                    apply_extraction(initial_match, ScenarioExtraction()),
+                scenario = gr.Textbox(
+                    label="Add evidence before kickoff",
+                    placeholder=(
+                        "Example: Argentina's first-choice striker is confirmed out."
+                    ),
+                    lines=3,
                 )
-            )
-            adjusted_card = gr.HTML(
-                forecast_html(
-                    initial_baseline, initial_match, "Scenario forecast"
-                )
-            )
+                with gr.Row():
+                    analyze_button = gr.Button(
+                        "Apply evidence", variant="primary", elem_classes="primary-button"
+                    )
+                    clear_button = gr.ClearButton(
+                        [scenario], value="Clear", elem_classes="secondary-button"
+                    )
 
-            gr.Markdown("### Commit your probabilities")
-            with gr.Row():
-                user_home = gr.Slider(
-                    0, 100, value=45, step=1, label="Home win %"
+                factors_card = gr.HTML(
+                    factors_html(
+                        ScenarioExtraction(),
+                        apply_extraction(initial_match, ScenarioExtraction()),
+                    )
                 )
-                user_draw = gr.Slider(
-                    0, 100, value=25, step=1, label="Draw %"
+                adjusted_card = gr.HTML(
+                    forecast_html(
+                        initial_baseline, initial_match, "Scenario forecast"
+                    )
                 )
-                user_away = gr.HTML(derived_away_html(45, 25))
-            reveal_button = gr.Button(
-                "Lock forecast and reveal result",
-                variant="primary",
-                elem_classes="primary-button",
-            )
-            reveal_card = gr.HTML()
 
-            match_selector.change(
-                select_match,
-                inputs=match_selector,
-                outputs=[
-                    match_id_state,
-                    baseline_state,
-                    adjusted_state,
-                    match_card,
-                    baseline_card,
-                    factors_card,
-                    adjusted_card,
-                    reveal_card,
-                    user_away,
-                ],
-            )
-            analyze_button.click(
-                run_scenario,
-                inputs=[match_selector, scenario],
-                outputs=[adjusted_state, factors_card, adjusted_card, reveal_card],
-            )
-            scenario.submit(
-                run_scenario,
-                inputs=[match_selector, scenario],
-                outputs=[adjusted_state, factors_card, adjusted_card, reveal_card],
-            )
-            user_home.change(
-                update_user_forecast,
-                inputs=[user_home, user_draw],
-                outputs=user_away,
-            )
-            user_draw.change(
-                update_user_forecast,
-                inputs=[user_home, user_draw],
-                outputs=user_away,
-            )
-            reveal_button.click(
-                reveal,
-                inputs=[
-                    match_selector,
-                    baseline_state,
-                    adjusted_state,
-                    user_home,
-                    user_draw,
-                ],
-                outputs=reveal_card,
-            )
+                gr.Markdown("### Commit probabilities")
+                with gr.Row():
+                    user_home = gr.Slider(
+                        0, 100, value=45, step=1, label="Home win %"
+                    )
+                    user_draw = gr.Slider(
+                        0, 100, value=25, step=1, label="Draw %"
+                    )
+                    user_away = gr.HTML(derived_away_html(45, 25))
+                reveal_button = gr.Button(
+                    "Commit forecast and reveal result",
+                    variant="primary",
+                    elem_classes="primary-button",
+                )
+                reveal_card = gr.HTML()
 
-        with gr.Tab("Track Record"):
+                match_selector.change(
+                    select_match,
+                    inputs=match_selector,
+                    outputs=[
+                        match_id_state,
+                        baseline_state,
+                        adjusted_state,
+                        match_card,
+                        baseline_card,
+                        factors_card,
+                        adjusted_card,
+                        reveal_card,
+                        user_away,
+                    ],
+                )
+                analyze_button.click(
+                    run_scenario,
+                    inputs=[match_selector, scenario],
+                    outputs=[adjusted_state, factors_card, adjusted_card, reveal_card],
+                )
+                scenario.submit(
+                    run_scenario,
+                    inputs=[match_selector, scenario],
+                    outputs=[adjusted_state, factors_card, adjusted_card, reveal_card],
+                )
+                user_home.change(
+                    update_user_forecast,
+                    inputs=[user_home, user_draw],
+                    outputs=user_away,
+                )
+                user_draw.change(
+                    update_user_forecast,
+                    inputs=[user_home, user_draw],
+                    outputs=user_away,
+                )
+                reveal_button.click(
+                    reveal,
+                    inputs=[
+                        match_selector,
+                        baseline_state,
+                        adjusted_state,
+                        user_home,
+                        user_draw,
+                    ],
+                    outputs=reveal_card,
+                )
+
+        with gr.Tab(VISITOR_COPY["evidence_title"]):
             gr.HTML(track_record_html(world_cup_repository))
 
         with gr.Tab("Compare with other forecasters"):
