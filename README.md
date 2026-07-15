@@ -169,8 +169,9 @@ and keeps current-model retrospective replay clearly separate.
 
 The result path is intentionally semi-automatic:
 
-1. `.github/workflows/result-check.yml` polls football-data.org every three
-   hours using `FOOTBALL_DATA_API_KEY`.
+1. `.github/workflows/result-check.yml` polls every three hours. It uses
+   football-data.org when `FOOTBALL_DATA_API_KEY` is configured and otherwise
+   falls back to ESPN's public FIFA World Cup scoreboard feed.
 2. Provider names, IDs, kickoff times, fixture orientation, competition, and
    season are normalized and validated before a candidate update is written.
 3. New results or provider corrections are applied on an automation branch,
@@ -183,11 +184,13 @@ The result path is intentionally semi-automatic:
 
 Repository secrets required for these workflows:
 
-- `FOOTBALL_DATA_API_KEY`: football-data.org v4 API token.
+- `FOOTBALL_DATA_API_KEY` (optional): football-data.org v4 API token. Without
+  it, result ingestion remains active through the keyless ESPN fallback.
 - `HF_TOKEN`: Hugging Face token with write access to the Space.
 
-Missing secrets are reported as `not configured` in the workflow summary;
-they are not treated as a successful update or deployment.
+A missing `HF_TOKEN` is reported as `not configured` and is not treated as a
+successful deployment. Result ingestion does not require a secret; every run
+reports the provider it actually used and whether it found changes.
 
 The Space, base model, evaluated adapter, dataset, field notes, and source are
 published. `make sunday` closes the QLoRA gate, verifies all 495 official

@@ -59,7 +59,7 @@ def test_overdue_results_note_reports_unresolved_fixtures():
     assert "WC26-025" in note
 
 
-def test_snapshot_results_update_group_a_table():
+def test_complete_snapshot_produces_final_group_a_table():
     repository = TournamentRepository()
     standings = calculate_standings(
         [team.team for team in repository.group_teams("A")],
@@ -67,9 +67,10 @@ def test_snapshot_results_update_group_a_table():
     )
 
     assert standings[0].team == "Mexico"
-    assert standings[0].points == 3
-    assert standings[1].team == "South Korea"
-    assert standings[1].points == 3
+    assert standings[0].points == 9
+    assert standings[1].team == "South Africa"
+    assert standings[1].points == 4
+    assert sum(row.played for row in standings) == 12
 
 
 def test_head_to_head_breaks_equal_points_before_overall_goal_difference():
@@ -104,24 +105,13 @@ def test_host_flag_does_not_apply_an_ungated_rating_boost():
     assert mexico.rating == mexico.elo
 
 
-def test_upcoming_html_supports_compact_mode_without_pick_language():
+def test_upcoming_html_reports_completed_group_stage():
     repository = TournamentRepository()
     html = upcoming_html(repository, mode="compact")
 
-    assert "What the model predicts next" in html
-    assert any(
-        tier in html
-        for tier in (
-            "Concentrated forecast",
-            "Moderate lean",
-            "Narrow lean",
-            "Near-even",
-        )
-    )
-    assert "betting pick" in html
-    assert "confidence" not in html
-    assert "Score-matrix mode" in html
-    assert "Top uncalibrated" in html
+    assert "All group-stage fixtures have been played" in html
+    assert "Check the knockout bracket for upcoming matches" in html
+    assert "What the model predicts next" not in html
 
 
 def test_confidence_tiers_distinguish_signal_strength():

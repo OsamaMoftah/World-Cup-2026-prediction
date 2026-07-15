@@ -256,19 +256,25 @@ def track_record_html(repository) -> str:
             rows = "<tr><td colspan='10'>No matches in this group yet.</td></tr>"
         metrics = (
             (
+                f"{summary['accuracy']:.1%}",
                 f"{summary['mean_log_loss']:.3f}",
                 f"{summary['mean_brier']:.3f}",
                 f"{summary['mean_rps']:.3f}",
+                f"{summary['log_loss_skill_vs_uniform']:+.1%}",
             )
             if summary["n"]
-            else ("-", "-", "-")
+            else ("-", "-", "-", "-", "-")
         )
         sample_note = (
             "Fewer than 30 matches so far: a useful early signal, but too "
             "small to call a stable accuracy rate yet."
             if summary["n"] < 30
-            else "Enough matches to start drawing conclusions, alongside the "
-            "uncertainty ranges in the Methodology tab."
+            else "Large enough for a descriptive comparison, while still "
+            "subject to tournament-specific sample uncertainty."
+        )
+        skill_note = (
+            "Positive skill means lower (better) log loss than equal 1/3 odds; "
+            "negative skill means worse."
         )
         return f"""
         <section class="lab-card">
@@ -277,12 +283,14 @@ def track_record_html(repository) -> str:
           <p class="context">{description}</p>
           <div class="score-grid">
             <div class="score-box"><span>Matches</span><strong>{summary['n']}</strong></div>
-            <div class="score-box"><span>Mean log loss</span><strong>{metrics[0]}</strong></div>
-            <div class="score-box"><span>Mean Brier</span><strong>{metrics[1]}</strong></div>
-            <div class="score-box"><span>Mean RPS</span><strong>{metrics[2]}</strong></div>
+            <div class="score-box"><span>Top-pick accuracy</span><strong>{metrics[0]}</strong></div>
+            <div class="score-box"><span>Mean log loss</span><strong>{metrics[1]}</strong></div>
+            <div class="score-box"><span>Mean Brier</span><strong>{metrics[2]}</strong></div>
+            <div class="score-box"><span>Mean RPS</span><strong>{metrics[3]}</strong></div>
+            <div class="score-box"><span>Log-loss skill vs equal odds</span><strong>{metrics[4]}</strong></div>
             <div class="score-box"><span>"Just guess equally" baseline</span><strong>{summary['uniform_log_loss']:.3f}</strong></div>
           </div>
-          <p class="small">{sample_note}</p>
+          <p class="small">{skill_note} {sample_note}</p>
           <div class="table-scroll"><table>
             <thead><tr><th>ID</th><th>Home</th><th>Score</th><th>Away</th>
             <th>1</th><th>X</th><th>2</th><th>LogLoss</th><th>Brier</th><th>RPS</th></tr></thead>
@@ -291,14 +299,25 @@ def track_record_html(repository) -> str:
         </section>
         """
 
-    intro = """
+    coverage = records["coverage"]
+    excluded = ", ".join(coverage["excluded_fixture_ids"])
+    intro = f"""
     <section class="lab-card">
       <div class="eyebrow">Track record</div>
       <h2>How accurate have we been so far?</h2>
       <p class="context">Every row below is a prediction we made and froze
       <em>before</em> kickoff, compared against what actually happened.
-      Lower scores are better across the board. See the Methodology tab for
-      how we make sure this list can't be edited after the fact.</p>
+      Proper scoring rules are the primary measure; top-pick accuracy is shown
+      as a familiar secondary measure. Lower log loss, Brier, and RPS are
+      better. See the Methodology tab for the artifact audit.</p>
+      <div class="score-grid">
+        <div class="score-box"><span>Completed group matches</span><strong>{coverage['completed']}</strong></div>
+        <div class="score-box"><span>Verified forecasts scored</span><strong>{coverage['scored']}</strong></div>
+        <div class="score-box"><span>Prospective coverage</span><strong>{coverage['rate']:.1%}</strong></div>
+        <div class="score-box"><span>Excluded from scoring</span><strong>{coverage['excluded']}</strong></div>
+      </div>
+      <p class="small">Excluded because no valid pre-kickoff artifact exists:
+      {excluded}. Historical forecast files remain immutable.</p>
     </section>
     """
 
@@ -311,7 +330,14 @@ def track_record_html(repository) -> str:
         for horizon, summary in records["prospective_by_horizon"].items()
     )
 
-    return intro + prospective_sections + section(
+    aggregate = section(
+        "All verified pre-kickoff predictions",
+        "The honest headline score across all forecast horizons. Each match "
+        "is counted once using its latest eligible artifact before kickoff.",
+        records["prospective"],
+    )
+
+    return intro + aggregate + prospective_sections + section(
         "If we replayed every match with today's model",
         "This re-runs the current model over every match played so far. "
         "It's a useful diagnostic, but because it uses today's corrected "
@@ -547,16 +573,17 @@ cut, and how we audit ourselves, see the **Methodology** tab.
 
 initial_match = repository.by_label(labels[0])
 initial_baseline = baseline_forecast(initial_match)
-initial_world_cup_label = world_cup_labels[0]
-initial_world_cup_fixture = world_cup_fixtures[initial_world_cup_label]
-initial_world_cup_match = fixture_as_match(
-    initial_world_cup_fixture,
-    world_cup_repository,
-)
-initial_world_cup_forecast = match_forecast(
-    initial_world_cup_fixture,
-    world_cup_repository.team_by_name,
-)
+if world_cup_labels:
+    initial_world_cup_label = world_cup_labels[0]
+    initial_world_cup_fixture = world_cup_fixtures[initial_world_cup_label]
+    initial_world_cup_match = fixture_as_match(
+        initial_world_cup_fixture,
+        world_cup_repository,
+    )
+    initial_world_cup_forecast = match_forecast(
+        initial_world_cup_fixture,
+        world_cup_repository.team_by_name,
+    )
 world_cup_probabilities = simulate_tournament(world_cup_repository)
 
 LIGHT_THEME = Soft(
@@ -606,79 +633,94 @@ with gr.Blocks(title="World Cup 2026 Forecaster") as demo:
 
             gr.HTML(model_summary_html())
 
-            gr.Markdown("## Apply late-breaking evidence to an upcoming match")
-            gr.Markdown(
-                "Type in a piece of news and watch the forecast shift. This "
-                "is experimental — a small local model reads your text "
-                "and proposes adjustments, so check the extracted factors "
-                "below before trusting the result."
-            )
-            live_fixture_selector = gr.Dropdown(
-                choices=world_cup_labels,
-                value=initial_world_cup_label,
-                label="Upcoming fixture",
-            )
-            live_baseline_card = gr.HTML(
-                forecast_html(
-                    initial_world_cup_forecast,
-                    initial_world_cup_match,
-                    "2026 baseline forecast",
+            if world_cup_labels:
+                gr.Markdown("## Apply late-breaking evidence to an upcoming match")
+                gr.Markdown(
+                    "Type in a piece of news and watch the forecast shift. This "
+                    "is experimental — a small local model reads your text "
+                    "and proposes adjustments, so check the extracted factors "
+                    "below before trusting the result."
                 )
-            )
-            live_scenario = gr.Textbox(
-                label="Pre-match report",
-                placeholder=(
-                    f"Example: {initial_world_cup_fixture.home}'s first-choice "
-                    "striker is confirmed out."
-                ),
-                lines=3,
-            )
-            live_analyze_button = gr.Button(
-                "Adjust 2026 forecast",
-                variant="primary",
-                elem_classes="primary-button",
-            )
-            live_factors_card = gr.HTML(
-                factors_html(
-                    ScenarioExtraction(),
-                    apply_extraction(
+                live_fixture_selector = gr.Dropdown(
+                    choices=world_cup_labels,
+                    value=initial_world_cup_label,
+                    label="Upcoming fixture",
+                )
+                live_baseline_card = gr.HTML(
+                    forecast_html(
+                        initial_world_cup_forecast,
                         initial_world_cup_match,
-                        ScenarioExtraction(),
+                        "2026 baseline forecast",
+                    )
+                )
+                live_scenario = gr.Textbox(
+                    label="Pre-match report",
+                    placeholder=(
+                        f"Example: {initial_world_cup_fixture.home}'s first-choice "
+                        "striker is confirmed out."
                     ),
+                    lines=3,
                 )
-            )
-            live_adjusted_card = gr.HTML(
-                forecast_html(
-                    initial_world_cup_forecast,
-                    initial_world_cup_match,
-                    "Scenario forecast (experimental)",
+                live_analyze_button = gr.Button(
+                    "Adjust 2026 forecast",
+                    variant="primary",
+                    elem_classes="primary-button",
                 )
-            )
-            live_comparison_card = gr.HTML(
-                match_comparison_html(
-                    initial_world_cup_fixture, initial_world_cup_forecast
+                live_factors_card = gr.HTML(
+                    factors_html(
+                        ScenarioExtraction(),
+                        apply_extraction(
+                            initial_world_cup_match,
+                            ScenarioExtraction(),
+                        ),
+                    )
                 )
-            )
-            live_fixture_selector.change(
-                select_world_cup_fixture,
-                inputs=live_fixture_selector,
-                outputs=[
-                    live_baseline_card,
-                    live_factors_card,
-                    live_adjusted_card,
-                    live_comparison_card,
-                ],
-            )
-            live_analyze_button.click(
-                run_world_cup_scenario,
-                inputs=[live_fixture_selector, live_scenario],
-                outputs=[live_factors_card, live_adjusted_card],
-            )
-            live_scenario.submit(
-                run_world_cup_scenario,
-                inputs=[live_fixture_selector, live_scenario],
-                outputs=[live_factors_card, live_adjusted_card],
-            )
+                live_adjusted_card = gr.HTML(
+                    forecast_html(
+                        initial_world_cup_forecast,
+                        initial_world_cup_match,
+                        "Scenario forecast (experimental)",
+                    )
+                )
+                live_comparison_card = gr.HTML(
+                    match_comparison_html(
+                        initial_world_cup_fixture, initial_world_cup_forecast
+                    )
+                )
+                live_fixture_selector.change(
+                    select_world_cup_fixture,
+                    inputs=live_fixture_selector,
+                    outputs=[
+                        live_baseline_card,
+                        live_factors_card,
+                        live_adjusted_card,
+                        live_comparison_card,
+                    ],
+                )
+                live_analyze_button.click(
+                    run_world_cup_scenario,
+                    inputs=[live_fixture_selector, live_scenario],
+                    outputs=[live_factors_card, live_adjusted_card],
+                )
+                live_scenario.submit(
+                    run_world_cup_scenario,
+                    inputs=[live_fixture_selector, live_scenario],
+                    outputs=[live_factors_card, live_adjusted_card],
+                )
+            else:
+                gr.HTML(
+                    """
+                    <section class="lab-card">
+                      <div class="eyebrow">Scenario lab</div>
+                      <h2>The group-stage scenario window is closed</h2>
+                      <p class="context">All 72 group fixtures have been
+                      played. The original pre-kickoff forecasts remain frozen
+                      and are graded in the Track Record tab; this panel is
+                      disabled so completed matches cannot be presented as
+                      live prediction opportunities.</p>
+                    </section>
+                    """
+                )
 
             with gr.Accordion("Group tables & standings", open=False):
                 with gr.Row():

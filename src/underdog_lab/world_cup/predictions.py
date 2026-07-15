@@ -183,10 +183,28 @@ def scored_track_records(
                 metadata=prediction,
             )
         )
+    completed_fixture_ids = [
+        fixture.fixture_id for fixture in fixtures if fixture.played
+    ]
+    scored_fixture_ids = {
+        row["fixture_id"] for row in latest_rows
+    }
+    excluded_fixture_ids = sorted(
+        set(completed_fixture_ids) - scored_fixture_ids
+    )
+    completed = len(completed_fixture_ids)
     return {
         "prospective": _summarize(latest_rows),
         "prospective_by_horizon": summaries,
         "retrospective": _summarize(retrospective),
+        "coverage": {
+            "completed": completed,
+            "scored": len(scored_fixture_ids),
+            "excluded": len(excluded_fixture_ids),
+            "rate": len(scored_fixture_ids) / completed if completed else None,
+            "excluded_fixture_ids": excluded_fixture_ids,
+            "exclusion_reason": "no_verified_pre_kickoff_artifact",
+        },
         "artifact_audit": {
             "eligible": len(audit["eligible"]),
             "rejected": len(audit["rejected"]),
@@ -321,6 +339,15 @@ def _score_record(
     source: str,
     metadata: dict | None = None,
 ) -> dict:
+    probabilities = {
+        "home": forecast.p_home,
+        "draw": forecast.p_draw,
+        "away": forecast.p_away,
+    }
+    predicted_outcome = max(
+        ("home", "draw", "away"),
+        key=lambda name: probabilities[name],
+    )
     return {
         "fixture_id": fixture.fixture_id,
         "group": fixture.group,
@@ -328,6 +355,8 @@ def _score_record(
         "away": fixture.away,
         "score": f"{fixture.home_goals}-{fixture.away_goals}",
         "outcome": outcome,
+        "predicted_outcome": predicted_outcome,
+        "correct": predicted_outcome == outcome,
         "p_home": forecast.p_home,
         "p_draw": forecast.p_draw,
         "p_away": forecast.p_away,
@@ -344,18 +373,26 @@ def _summarize(rows: list[dict]) -> dict:
     if not rows:
         return {
             "n": 0,
+            "correct": 0,
+            "accuracy": None,
             "mean_log_loss": None,
             "mean_brier": None,
             "mean_rps": None,
             "uniform_log_loss": uniform_log_loss,
+            "log_loss_skill_vs_uniform": None,
             "rows": [],
         }
+    mean_log_loss = sum(row["log_loss"] for row in rows) / len(rows)
+    correct = sum(bool(row["correct"]) for row in rows)
     return {
         "n": len(rows),
-        "mean_log_loss": sum(row["log_loss"] for row in rows) / len(rows),
+        "correct": correct,
+        "accuracy": correct / len(rows),
+        "mean_log_loss": mean_log_loss,
         "mean_brier": sum(row["brier"] for row in rows) / len(rows),
         "mean_rps": sum(row["rps"] for row in rows) / len(rows),
         "uniform_log_loss": uniform_log_loss,
+        "log_loss_skill_vs_uniform": 1 - mean_log_loss / uniform_log_loss,
         "rows": rows,
     }
 

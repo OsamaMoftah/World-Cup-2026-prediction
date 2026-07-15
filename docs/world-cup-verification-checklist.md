@@ -27,7 +27,8 @@ forecast files under `predictions/` must never be rewritten.
 The audited automatic path is:
 
 - `scripts/fetch_wc2026_results.py` reads football-data.org competition `WC`,
-  season `2026`, stage `GROUP_STAGE`.
+  season `2026`, stage `GROUP_STAGE` when a token is configured; otherwise it
+  reads ESPN's public `fifa.world` scoreboard for the 2026 group stage.
 - `data/world_cup_2026/provider_mappings/football_data.json` maps provider
   names to the repository’s canonical team names. Provider IDs discovered in
   a response are preserved in the candidate update for review.
@@ -38,9 +39,10 @@ The audited automatic path is:
 - `.github/workflows/result-check.yml` opens or updates a PR; a human merge is
   required before the snapshot changes on `main`.
 
-Configure the repository secret `FOOTBALL_DATA_API_KEY` before expecting
-scheduled result PRs. Configure `HF_TOKEN` with Space write access for exact
-revision deployment after merge.
+`FOOTBALL_DATA_API_KEY` is optional: football-data.org is primary when it is
+configured, and ESPN is the keyless fallback. Every scheduled run reports the
+provider used and whether it produced an audited update. Configure `HF_TOKEN`
+with Space write access for exact revision deployment after merge.
 
 All 72 group fixtures have UTC kickoff timestamps in
 `data/world_cup_2026/kickoffs.json`. Run `make health` to verify schedule

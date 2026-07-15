@@ -11,10 +11,13 @@ def _metrics(summary: dict) -> dict:
         key: summary[key]
         for key in (
             "n",
+            "correct",
+            "accuracy",
             "mean_log_loss",
             "mean_brier",
             "mean_rps",
             "uniform_log_loss",
+            "log_loss_skill_vs_uniform",
         )
     }
 
@@ -28,6 +31,7 @@ def main() -> int:
     report = {
         "recorded_fixtures": sum(fixture.played for fixture in repository.fixtures),
         "artifact_audit": records["artifact_audit"],
+        "coverage": records["coverage"],
         "prospective_latest": _metrics(records["prospective"]),
         "prospective_by_horizon": {
             horizon: _metrics(summary)

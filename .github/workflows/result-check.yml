@@ -30,21 +30,27 @@ jobs:
         env:
           FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
         run: |
-          if [ -z "$FOOTBALL_DATA_API_KEY" ]; then
-            echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::FOOTBALL_DATA_API_KEY is not configured."
-            exit 0
+          output="data/world_cup_2026/result_updates/provider-$(date -u +%Y%m%dT%H%M%SZ).json"
+          fetch_log="$(mktemp)"
+          PYTHONPATH=src python scripts/fetch_wc2026_results.py \
+            --provider auto \
+            --output "$output" | tee "$fetch_log"
+          provider="$(sed -n 's/^provider=//p' "$fetch_log" | tail -1)"
+          if [ -z "$provider" ]; then
+            echo "::error::Result fetcher did not report its provider."
+            exit 1
           fi
-          output="data/world_cup_2026/result_updates/football-data-$(date -u +%Y%m%dT%H%M%SZ).json"
-          PYTHONPATH=src python scripts/fetch_wc2026_results.py --output "$output"
+          echo "provider=$provider" >> "$GITHUB_OUTPUT"
           if [ -f "$output" ]; then
-            echo "configured=true" >> "$GITHUB_OUTPUT"
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "output=$output" >> "$GITHUB_OUTPUT"
           else
-            echo "configured=true" >> "$GITHUB_OUTPUT"
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
+      - name: Report result source
+        run: |
+          echo "result_provider=${{ steps.fetch.outputs.provider }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "result_changes=${{ steps.fetch.outputs.changed }}" >> "$GITHUB_STEP_SUMMARY"
       - name: Apply audited update
         if: steps.fetch.outputs.changed == 'true'
         run: |

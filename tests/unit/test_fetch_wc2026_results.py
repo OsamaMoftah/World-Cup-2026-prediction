@@ -2,11 +2,17 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+import pytest
+
 from underdog_lab.world_cup.data import TournamentRepository
-from underdog_lab.world_cup.providers import normalize_football_data_response
+from underdog_lab.world_cup.providers import (
+    normalize_espn_response,
+    normalize_football_data_response,
+)
 
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "football_data_wc2026.json"
+ESPN_FIXTURE = Path(__file__).parents[1] / "fixtures" / "espn_wc2026.json"
 FROZEN_SNAPSHOT = Path(__file__).parents[1] / "fixtures" / "world_cup" / "current_snapshot.json"
 
 
@@ -100,3 +106,54 @@ def test_provider_response_accepts_reversed_orientation_and_nested_season():
         result["mapping_discovery"]["provider_match_ids"]["900025"]
         == "WC26-025"
     )
+
+
+def test_espn_response_maps_home_away_and_scores():
+    payload = json.loads(ESPN_FIXTURE.read_text(encoding="utf-8"))
+    mapping = json.loads(
+        Path("data/world_cup_2026/provider_mappings/espn.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    result = normalize_espn_response(
+        payload,
+        TournamentRepository(snapshot_path=FROZEN_SNAPSHOT),
+        mapping["aliases"],
+        fetched_at=datetime(2026, 6, 14, 20, tzinfo=timezone.utc),
+    )
+
+    assert result["provider"] == "espn"
+    assert len(result["results"]) == 1
+    assert result["results"][0]["fixture_id"] == "WC26-025"
+    assert result["results"][0]["home"] == "Germany"
+    assert result["results"][0]["home_goals"] == 2
+    assert result["results"][0]["away_goals"] == 0
+    assert result["mapping_discovery"]["provider_match_ids"]["760422"] == "WC26-025"
+    assert result["raw_response_sha256"]
+
+
+def test_espn_response_rejects_wrong_competition():
+    payload = json.loads(ESPN_FIXTURE.read_text(encoding="utf-8"))
+    payload["leagues"][0]["slug"] = "eng.1"
+
+    with pytest.raises(ValueError, match="not FIFA World Cup"):
+        normalize_espn_response(
+            payload,
+            TournamentRepository(snapshot_path=FROZEN_SNAPSHOT),
+            {},
+            fetched_at=datetime(2026, 6, 14, 20, tzinfo=timezone.utc),
+        )
+
+
+def test_espn_response_rejects_empty_group_stage_feed():
+    payload = json.loads(ESPN_FIXTURE.read_text(encoding="utf-8"))
+    payload["events"] = []
+
+    with pytest.raises(ValueError, match="no group-stage fixtures"):
+        normalize_espn_response(
+            payload,
+            TournamentRepository(snapshot_path=FROZEN_SNAPSHOT),
+            {},
+            fetched_at=datetime(2026, 6, 14, 20, tzinfo=timezone.utc),
+        )

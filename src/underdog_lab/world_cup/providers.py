@@ -8,6 +8,7 @@ from underdog_lab.world_cup.data import TournamentRepository
 
 GROUP_STAGE = "GROUP_STAGE"
 FINISHED = "FINISHED"
+ESPN_GROUP_STAGE = "group-stage"
 
 
 def normalize_football_data_response(
@@ -161,6 +162,164 @@ def normalize_football_data_response(
     }
 
 
+def normalize_espn_response(
+    payload: dict,
+    repository: TournamentRepository,
+    aliases: dict[str, str],
+    *,
+    fetched_at: datetime | None = None,
+    kickoff_tolerance_minutes: int = 180,
+) -> dict:
+    fetched_at = fetched_at or datetime.now(timezone.utc)
+    leagues = payload.get("leagues") or []
+    league = leagues[0] if leagues else {}
+    season = league.get("season") or {}
+    if league.get("slug") != "fifa.world":
+        raise ValueError("ESPN response is not FIFA World Cup")
+    if int(season.get("year", 0)) != 2026:
+        raise ValueError("ESPN response is not the 2026 World Cup season")
+
+    fixture_by_pair = {
+        (fixture.home, fixture.away): (fixture, False)
+        for fixture in repository.fixtures
+    }
+    fixture_by_pair.update(
+        {
+            (fixture.away, fixture.home): (fixture, True)
+            for fixture in repository.fixtures
+        }
+    )
+    existing = {
+        (row["group"], row["home"], row["away"]): row
+        for row in repository.snapshot["results"]
+    }
+    additions = []
+    corrections = []
+    provider_matches = []
+    seen_fixture_ids = set()
+    discovered_team_ids = {}
+    discovered_match_ids = {}
+
+    for event in payload.get("events") or []:
+        event_season = event.get("season") or {}
+        if event_season.get("slug") != ESPN_GROUP_STAGE:
+            continue
+        competitions = event.get("competitions") or []
+        competition = competitions[0] if competitions else {}
+        competitors = competition.get("competitors") or []
+        home_team = next(
+            (row for row in competitors if row.get("homeAway") == "home"),
+            None,
+        )
+        away_team = next(
+            (row for row in competitors if row.get("homeAway") == "away"),
+            None,
+        )
+        if home_team is None or away_team is None:
+            raise ValueError(f"missing ESPN competitors for event {event.get('id')}")
+        home = _espn_team_name(home_team, aliases)
+        away = _espn_team_name(away_team, aliases)
+        fixture_match = fixture_by_pair.get((home, away))
+        if fixture_match is None:
+            raise ValueError(f"unmapped World Cup fixture: {home} vs {away}")
+        fixture, reversed_orientation = fixture_match
+        if fixture.fixture_id in seen_fixture_ids:
+            raise ValueError(f"duplicate provider match for {fixture.fixture_id}")
+        seen_fixture_ids.add(fixture.fixture_id)
+        _record_espn_team_id(discovered_team_ids, home_team, home)
+        _record_espn_team_id(discovered_team_ids, away_team, away)
+        if event.get("id") is not None:
+            discovered_match_ids[str(event["id"])] = fixture.fixture_id
+
+        provider_kickoff = _timestamp(event.get("date"))
+        if provider_kickoff is None:
+            raise ValueError(f"missing provider kickoff for {fixture.fixture_id}")
+        delta = abs((provider_kickoff - fixture.kickoff_utc).total_seconds()) / 60
+        if delta > kickoff_tolerance_minutes:
+            raise ValueError(
+                f"kickoff mismatch for {fixture.fixture_id}: {delta:.0f} minutes"
+            )
+        status = event.get("status") or {}
+        status_type = status.get("type") or {}
+        provider_matches.append(
+            {
+                "provider_match_id": event.get("id"),
+                "fixture_id": fixture.fixture_id,
+                "status": status_type.get("name"),
+                "provider_kickoff_utc": provider_kickoff.isoformat(),
+            }
+        )
+        if status_type.get("completed") is not True:
+            continue
+        home_goals = home_team.get("score")
+        away_goals = away_team.get("score")
+        if home_goals is None or away_goals is None:
+            raise ValueError(f"completed ESPN event has no score: {fixture.fixture_id}")
+        if reversed_orientation:
+            home_goals, away_goals = away_goals, home_goals
+        row = {
+            "provider": "espn",
+            "provider_match_id": event.get("id"),
+            "fixture_id": fixture.fixture_id,
+            "group": fixture.group,
+            "home": fixture.home,
+            "away": fixture.away,
+            "home_goals": int(home_goals),
+            "away_goals": int(away_goals),
+        }
+        old = existing.get((fixture.group, fixture.home, fixture.away))
+        if old is None:
+            additions.append(row)
+        elif (
+            old["home_goals"] != row["home_goals"]
+            or old["away_goals"] != row["away_goals"]
+        ):
+            corrections.append(
+                {
+                    **row,
+                    "previous_home_goals": old["home_goals"],
+                    "previous_away_goals": old["away_goals"],
+                }
+            )
+
+    if not seen_fixture_ids:
+        raise ValueError("ESPN response contains no group-stage fixtures")
+
+    cutoff = safe_information_cutoff(
+        repository,
+        additions,
+        corrections,
+        fetched_at=fetched_at,
+    )
+    raw = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    return {
+        "provider": "espn",
+        "fetched_at": fetched_at.isoformat(),
+        "competition": {
+            "id": league.get("id"),
+            "slug": league.get("slug"),
+            "name": league.get("name"),
+        },
+        "season": {
+            "year": season.get("year"),
+            "displayName": season.get("displayName"),
+        },
+        "raw_response_sha256": hashlib.sha256(raw).hexdigest(),
+        "information_cutoff": cutoff.isoformat().replace("+00:00", "Z"),
+        "sources": [
+            "https://site.api.espn.com/apis/site/v2/sports/soccer/"
+            "fifa.world/scoreboard"
+        ],
+        "results": additions,
+        "corrections": corrections,
+        "provider_matches": provider_matches,
+        "mapping_discovery": {
+            "provider_team_ids": discovered_team_ids,
+            "provider_match_ids": discovered_match_ids,
+        },
+    }
+
+
 def safe_information_cutoff(
     repository: TournamentRepository,
     additions: list[dict],
@@ -203,6 +362,30 @@ def _team_name(team: dict, aliases: dict[str, str]) -> str:
 
 def _record_team_id(discovered: dict[str, str], team: dict, name: str) -> None:
     provider_id = team.get("id")
+    if provider_id is not None:
+        discovered[str(provider_id)] = name
+
+
+def _espn_team_name(competitor: dict, aliases: dict[str, str]) -> str:
+    team = competitor.get("team") or {}
+    candidates = [
+        str(team.get("id", "")),
+        team.get("displayName"),
+        team.get("shortDisplayName"),
+        team.get("name"),
+        team.get("abbreviation"),
+    ]
+    for candidate in candidates:
+        if candidate in aliases:
+            return aliases[candidate]
+    raise ValueError(f"unmapped ESPN team: {team}")
+
+
+def _record_espn_team_id(
+    discovered: dict[str, str], competitor: dict, name: str
+) -> None:
+    team = competitor.get("team") or {}
+    provider_id = team.get("id") or competitor.get("id")
     if provider_id is not None:
         discovered[str(provider_id)] = name
 
