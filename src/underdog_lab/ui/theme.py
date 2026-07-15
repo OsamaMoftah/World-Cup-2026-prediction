@@ -300,8 +300,11 @@ footer {
 
 .stat-legend {
   margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line-soft);
+  padding: 11px 13px;
+  border: 1px solid var(--line-soft);
+  border-left: 3px solid var(--red);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 250, 247, 0.72);
 }
 
 .stat-legend-title {
@@ -317,6 +320,22 @@ footer {
   flex-wrap: wrap;
   gap: 6px 12px;
   margin-top: 8px;
+}
+
+.stat-legend-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.stat-legend-group-title {
+  color: var(--ink-soft);
+  font-family: 'Geist Mono', monospace !important;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .stat-legend-item {
@@ -601,6 +620,7 @@ tbody tr:hover {
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
   background: #fff;
+  box-shadow: none;
 }
 
 .player-card-head {
@@ -741,6 +761,7 @@ tbody tr:hover {
   border: 1px solid rgba(214, 63, 77, 0.3);
   border-radius: var(--radius-sm);
   background: rgba(255, 241, 243, 0.52);
+  box-shadow: none;
 }
 
 .attribute-panel .rating-layer-label {
@@ -830,6 +851,10 @@ tbody tr:hover {
   .stat-methodology-grid {
     grid-template-columns: 1fr;
   }
+
+  .stat-legend-groups {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stat-top {
@@ -847,12 +872,14 @@ tbody tr:hover {
   overflow: hidden;
   border-radius: 999px;
   background: var(--blue-soft);
+  box-shadow: none;
 }
 
 .stat-fill {
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, var(--blue), var(--red));
+  box-shadow: none;
 }
 
 /* Gradio chrome */

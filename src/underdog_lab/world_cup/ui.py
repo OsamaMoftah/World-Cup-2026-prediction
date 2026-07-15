@@ -492,7 +492,7 @@ def _player_card_html(rank: int, row: dict, *, rating_key: str, rating_label: st
       <div class="model-signal model-form">
         <span class="model-signal-kicker">MODEL SIGNAL</span>
         <strong>{row["form_rating"]}/99</strong>
-        <span class="model-signal-note">tournament context · projected team run</span>
+        <span class="model-signal-note">projected run signal</span>
       </div>
       <div class="attribute-panel estimated-attributes">
         <div class="rating-layer-label">
@@ -506,7 +506,7 @@ def _player_card_html(rank: int, row: dict, *, rating_key: str, rating_label: st
 
 
 def player_stat_legend_html() -> str:
-    stats = (
+    player_stats = (
         ("OVR", "overall rating"),
         ("POT", "potential rating"),
         ("PAC", "pace"),
@@ -515,6 +515,8 @@ def player_stat_legend_html() -> str:
         ("DRI", "dribbling"),
         ("DEF", "defending"),
         ("PHY", "physical"),
+    )
+    goalkeeper_stats = (
         ("DIV", "goalkeeper diving"),
         ("HAN", "goalkeeper handling"),
         ("KIC", "goalkeeper kicking"),
@@ -522,14 +524,21 @@ def player_stat_legend_html() -> str:
         ("SPD", "goalkeeper speed"),
         ("POS", "goalkeeper positioning"),
     )
-    items = "".join(
+    player_items = "".join(
         f'<span class="stat-legend-item"><strong>{abbr}</strong>{meaning}</span>'
-        for abbr, meaning in stats
+        for abbr, meaning in player_stats
+    )
+    goalkeeper_items = "".join(
+        f'<span class="stat-legend-item"><strong>{abbr}</strong>{meaning}</span>'
+        for abbr, meaning in goalkeeper_stats
     )
     return f"""
-    <section class="stat-legend" aria-label="Player card abbreviations">
-      <strong class="stat-legend-title">Card key</strong>
-      <div class="stat-legend-grid">{items}</div>
+    <section class="stat-legend" aria-label="Player card glossary">
+      <strong class="stat-legend-title">Glossary · card abbreviations</strong>
+      <div class="stat-legend-groups">
+        <div class="stat-legend-group"><span class="stat-legend-group-title">Player attributes</span><div class="stat-legend-grid">{player_items}</div></div>
+        <div class="stat-legend-group"><span class="stat-legend-group-title">Goalkeeper attributes</span><div class="stat-legend-grid">{goalkeeper_items}</div></div>
+      </div>
     </section>
     """
 

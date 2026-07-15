@@ -94,8 +94,21 @@ def test_player_cards_separate_estimated_attributes_from_model_form():
     assert "model-signal" in card
     assert "ESTIMATE" in card
     assert "MODEL SIGNAL" in card
+    assert "projected run signal" in card
     assert "not licensed EA data" in methodology
     assert "public player ratings" in methodology
+
+
+def test_player_glossary_is_compact_and_defines_core_and_goalkeeper_terms():
+    from underdog_lab.world_cup.ui import player_stat_legend_html
+
+    glossary = player_stat_legend_html()
+
+    assert "Glossary" in glossary
+    assert "Player attributes" in glossary
+    assert "Goalkeeper attributes" in glossary
+    assert "PAC" in glossary and "pace" in glossary
+    assert "DIV" in glossary and "goalkeeper diving" in glossary
 
 
 def test_repository_contains_full_group_stage():
