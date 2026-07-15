@@ -40,7 +40,7 @@ def online_release_checks(config: dict[str, Any]) -> dict[str, bool]:
         "https://api.github.com/repos/OsamaMoftah/World-Cup-2026-predicition"
     )
     space = _fetch_json(
-        "https://huggingface.co/api/spaces/build-small-hackathon/World-Cup-2026-predicition"
+        "https://huggingface.co/api/spaces/sammoftah/World-Cup-2026-prediction"
     )
     runtime = space.get("runtime") or {}
     return {

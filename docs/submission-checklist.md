@@ -56,7 +56,7 @@ git push origin hackathon-submission
 
 ## Published URLs
 
-- Space: https://huggingface.co/spaces/build-small-hackathon/World-Cup-2026-predicition
+- Space: https://huggingface.co/spaces/sammoftah/World-Cup-2026-prediction
 - Source: https://github.com/OsamaMoftah/World-Cup-2026-predicition
 - Base model: https://huggingface.co/bartowski/SmolLM2-360M-Instruct-GGUF
 - Evaluated adapter: https://huggingface.co/sammoftah/underdog-lab-smollm2-360m-lora

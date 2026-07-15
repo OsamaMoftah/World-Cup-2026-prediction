@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      HF_SPACE: build-small-hackathon/World-Cup-2026-predicition
+      HF_SPACE: sammoftah/World-Cup-2026-prediction
     steps:
       - uses: actions/checkout@v6
         with:
@@ -47,5 +47,5 @@ jobs:
           python scripts/verify_space_revision.py \
             --space "$HF_SPACE" \
             --expected "$(git rev-parse HEAD)" \
-            --url https://build-small-hackathon-world-cup-2026-predicition.hf.space \
+            --url https://sammoftah-world-cup-2026-prediction.hf.space \
             --timeout 600

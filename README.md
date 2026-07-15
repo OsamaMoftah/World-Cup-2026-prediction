@@ -60,7 +60,7 @@ The language model never invents probabilities or numerical model deltas. It ext
 
 ## Submission Links
 
-- **Submission Space:** https://huggingface.co/spaces/build-small-hackathon/World-Cup-2026-predicition
+- **Primary Space:** https://huggingface.co/spaces/sammoftah/World-Cup-2026-prediction
 - **Source:** https://github.com/OsamaMoftah/World-Cup-2026-predicition
 - **Demo video:** `PENDING: add a public demo-video URL before final validation`
 - **Social post:** `PENDING: add the public social-media post URL before final validation`
@@ -179,7 +179,7 @@ The result path is intentionally semi-automatic:
 4. A human reviews and merges the PR. Automation never writes results directly
    to `main`.
 5. `.github/workflows/deploy-space.yml` pushes the exact merged Git revision
-   to `build-small-hackathon/World-Cup-2026-predicition` using `HF_TOKEN`, then waits for the Hub
+   to `sammoftah/World-Cup-2026-prediction` using `HF_TOKEN`, then waits for the Hub
    repository and running Space revision to match.
 
 Repository secrets required for these workflows:
