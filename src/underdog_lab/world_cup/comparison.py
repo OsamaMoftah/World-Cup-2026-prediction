@@ -14,6 +14,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from underdog_lab.world_cup.flags import team_label
+from underdog_lab.world_cup.predictions import scored_track_records
 
 EXTERNAL_FORECASTS_PATH = Path("data/world_cup_2026/external_forecasts.json")
 
@@ -141,3 +142,38 @@ def tournament_comparison_html(probabilities: dict, repository) -> str:
         """)
 
     return "".join(sections)
+
+
+def tournament_benchmark_html(repository) -> str:
+    """Show the honest headline score and the tournament-readiness signal."""
+    records = scored_track_records(repository.fixtures, repository.team_by_name)
+    summary = records["prospective"]
+    semifinalists = {"Spain", "England", "Argentina", "France"}
+    captured = set()
+    for match in repository.knockout_fixtures:
+        if match.stage == "semifinal":
+            captured.update((match.home, match.away))
+    semifinal_hit = len(captured & semifinalists)
+    return f"""
+    <section class="lab-card" style="border-color:rgba(53,114,74,.35)">
+      <div class="eyebrow">Performance spotlight</div>
+      <h2>What went well — and what is still unproven</h2>
+      <p class="context">Our pre-match group-stage forecasts currently have
+      <strong>{summary['accuracy']:.1%}</strong> top-pick accuracy across
+      <strong>{summary['n']}</strong> verified predictions, with
+      <strong>{summary['log_loss_skill_vs_uniform']:+.1%}</strong> log-loss
+      skill versus an equal 1/3 baseline. The model also named
+      <strong>{semifinal_hit}/4</strong> current semifinalists in its dated
+      long-range picture. That is encouraging directional evidence, not proof
+      that we beat the market; the final-horizon score is still pending.</p>
+      <div class="score-grid">
+        <div class="score-box"><span>Verified predictions</span><strong>{summary['n']}</strong></div>
+        <div class="score-box"><span>Top-pick accuracy</span><strong>{summary['accuracy']:.1%}</strong></div>
+        <div class="score-box"><span>Skill vs equal odds</span><strong>{summary['log_loss_skill_vs_uniform']:+.1%}</strong></div>
+        <div class="score-box"><span>Semifinalists identified</span><strong>{semifinal_hit}/4</strong></div>
+      </div>
+      <p class="small">Knockout results are now ingested from the live ESPN
+      bracket. The final forecast is conditional on semifinal 2 and will be
+      scored only after the final whistle.</p>
+    </section>
+    """

@@ -17,7 +17,8 @@ def test_result_workflow_keeps_human_review_gate():
     )
 
     assert "peter-evans/create-pull-request" in workflow
-    assert "--allow-corrections" in workflow
+    assert "--allow-corrections" not in workflow
+    assert "Refresh knockout bracket" in workflow
     assert "health_check.py --ignore-overdue-results" in workflow
 
 

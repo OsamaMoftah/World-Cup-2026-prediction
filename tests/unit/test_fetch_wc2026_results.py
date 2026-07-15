@@ -6,6 +6,7 @@ import pytest
 
 from underdog_lab.world_cup.data import TournamentRepository
 from underdog_lab.world_cup.providers import (
+    normalize_espn_knockout_response,
     normalize_espn_response,
     normalize_football_data_response,
 )
@@ -13,6 +14,7 @@ from underdog_lab.world_cup.providers import (
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "football_data_wc2026.json"
 ESPN_FIXTURE = Path(__file__).parents[1] / "fixtures" / "espn_wc2026.json"
+ESPN_KNOCKOUT_FIXTURE = Path(__file__).parents[1] / "fixtures" / "espn_knockout_wc2026.json"
 FROZEN_SNAPSHOT = Path(__file__).parents[1] / "fixtures" / "world_cup" / "current_snapshot.json"
 
 
@@ -157,3 +159,29 @@ def test_espn_response_rejects_empty_group_stage_feed():
             {},
             fetched_at=datetime(2026, 6, 14, 20, tzinfo=timezone.utc),
         )
+
+
+def test_espn_knockout_response_maps_stage_match_number_and_winner():
+    payload = json.loads(ESPN_KNOCKOUT_FIXTURE.read_text(encoding="utf-8"))
+    mapping = json.loads(
+        Path("data/world_cup_2026/provider_mappings/espn.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    result = normalize_espn_knockout_response(
+        payload,
+        mapping["aliases"],
+        fetched_at=datetime(2026, 7, 15, 8, tzinfo=timezone.utc),
+    )
+
+    semifinal = next(row for row in result["matches"] if row["match_number"] == 101)
+    final = next(row for row in result["matches"] if row["match_number"] == 104)
+    assert semifinal["stage"] == "semifinal"
+    assert semifinal["winner"] == "Spain"
+    assert (semifinal["home_goals"], semifinal["away_goals"]) == (2, 0)
+    assert final["stage"] == "final"
+    assert final["away"] == "Semifinal 2 Winner"
+    assert final["home_goals"] is None
+    assert result["provider"] == "espn"
+    assert result["raw_response_sha256"]

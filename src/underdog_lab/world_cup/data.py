@@ -5,7 +5,11 @@ from datetime import date, datetime
 from pathlib import Path
 
 from underdog_lab.config import DATA_DIR
-from underdog_lab.world_cup.models import TournamentFixture, TournamentTeam
+from underdog_lab.world_cup.models import (
+    KnockoutFixture,
+    TournamentFixture,
+    TournamentTeam,
+)
 
 
 GROUP_DATES = {
@@ -54,6 +58,18 @@ class TournamentRepository:
         self.kickoff_by_fixture = self.kickoff_schedule["kickoff_utc"]
         self.team_by_name = {team.team: team for team in self.teams}
         self.fixtures = self._build_fixtures()
+        knockout_path = root / "knockout.json"
+        knockout_payload = json.loads(knockout_path.read_text(encoding="utf-8"))
+        self.knockout_fixtures = [
+            KnockoutFixture.model_validate(row)
+            for row in knockout_payload["matches"]
+        ]
+        expected_numbers = set(range(73, 105))
+        actual_numbers = {fixture.match_number for fixture in self.knockout_fixtures}
+        if actual_numbers != expected_numbers:
+            raise ValueError("knockout snapshot must contain matches 73 through 104")
+        if len(self.knockout_fixtures) != 32:
+            raise ValueError("knockout snapshot must contain exactly 32 matches")
 
     def _build_fixtures(self) -> list[TournamentFixture]:
         by_group: dict[str, dict[int, str]] = {}
@@ -108,3 +124,7 @@ class TournamentRepository:
 
     def group_fixtures(self, group: str) -> list[TournamentFixture]:
         return [fixture for fixture in self.fixtures if fixture.group == group]
+
+    @property
+    def tournament_fixtures(self) -> list[TournamentFixture | KnockoutFixture]:
+        return [*self.fixtures, *self.knockout_fixtures]

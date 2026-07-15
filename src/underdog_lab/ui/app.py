@@ -26,6 +26,7 @@ from underdog_lab.ui.components import (
 )
 from underdog_lab.world_cup.comparison import (
     match_comparison_html,
+    tournament_benchmark_html,
     tournament_comparison_html,
 )
 from underdog_lab.world_cup.data import TournamentRepository
@@ -632,6 +633,7 @@ with gr.Blocks(title="World Cup 2026 Forecaster") as demo:
             )
 
             gr.HTML(model_summary_html())
+            gr.HTML(tournament_benchmark_html(world_cup_repository))
 
             if world_cup_labels:
                 gr.Markdown("## Apply late-breaking evidence to an upcoming match")

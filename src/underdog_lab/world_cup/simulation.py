@@ -69,6 +69,22 @@ def _knockout_win_probability(
     return forecast.p_home + forecast.p_draw * draw_resolution
 
 
+def _recorded_knockout_winner(
+    match: int,
+    first: str,
+    second: str,
+    repository: TournamentRepository,
+) -> str | None:
+    """Return a recorded winner only when the live bracket agrees with the simulation slot."""
+    fixture = next(
+        (item for item in repository.knockout_fixtures if item.match_number == match),
+        None,
+    )
+    if fixture is None or not fixture.played or fixture.winner is None:
+        return None
+    return fixture.winner
+
+
 def simulate_tournament(
     repository: TournamentRepository,
     iterations: int = 3000,
@@ -131,12 +147,10 @@ def simulate_tournament(
             best_thirds,
             group_by_team,
         ):
-            probability_first = _knockout_win_probability(
-                first,
-                second,
-                repository,
-            )
-            winner = first if rng.random() < probability_first else second
+            winner = _recorded_knockout_winner(match, first, second, repository)
+            if winner is None:
+                probability_first = _knockout_win_probability(first, second, repository)
+                winner = first if rng.random() < probability_first else second
             winners_by_match[match] = winner
             counts[winner]["round_of_16"] += 1
 
@@ -144,12 +158,10 @@ def simulate_tournament(
             for match, first_match, second_match in matches:
                 first = winners_by_match[first_match]
                 second = winners_by_match[second_match]
-                probability_first = _knockout_win_probability(
-                    first,
-                    second,
-                    repository,
-                )
-                winner = first if rng.random() < probability_first else second
+                winner = _recorded_knockout_winner(match, first, second, repository)
+                if winner is None:
+                    probability_first = _knockout_win_probability(first, second, repository)
+                    winner = first if rng.random() < probability_first else second
                 winners_by_match[match] = winner
                 advancement = {
                     "round_of_16": "quarterfinal",

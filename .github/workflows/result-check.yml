@@ -51,14 +51,23 @@ jobs:
         run: |
           echo "result_provider=${{ steps.fetch.outputs.provider }}" >> "$GITHUB_STEP_SUMMARY"
           echo "result_changes=${{ steps.fetch.outputs.changed }}" >> "$GITHUB_STEP_SUMMARY"
+      - name: Refresh knockout bracket
+        id: knockout
+        run: |
+          PYTHONPATH=src python scripts/build_knockout_snapshot.py --output /tmp/knockout.json
+          if [ ! -f data/world_cup_2026/knockout.json ] || ! cmp -s <(jq -S '.matches' data/world_cup_2026/knockout.json) <(jq -S '.matches' /tmp/knockout.json); then
+            cp /tmp/knockout.json data/world_cup_2026/knockout.json
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Apply audited update
         if: steps.fetch.outputs.changed == 'true'
         run: |
           PYTHONPATH=src python scripts/update_snapshot.py \
-            --results-file "${{ steps.fetch.outputs.output }}" \
-            --allow-corrections
+            --results-file "${{ steps.fetch.outputs.output }}"
       - name: Verify candidate snapshot
-        if: steps.fetch.outputs.changed == 'true'
+        if: steps.fetch.outputs.changed == 'true' || steps.knockout.outputs.changed == 'true'
         run: |
           PYTHONPATH=src python scripts/health_check.py --ignore-overdue-results
           PYTHONPATH=src:. pytest
@@ -69,12 +78,13 @@ jobs:
           python - <<'PY'
           import json, os
           path = os.environ["UPDATE_PATH"]
-          data = json.load(open(path))
+          data = json.load(open(path)) if path and os.path.exists(path) else {}
           with open("/tmp/result-pr.md", "w") as out:
-              out.write("Automated football-data.org result update.\n\n")
+              out.write("Automated World Cup result and bracket update.\n\n")
               out.write(f"- Additions: {len(data.get('results', []))}\n")
               out.write(f"- Corrections requiring review: {len(data.get('corrections', []))}\n")
-              out.write(f"- Raw response SHA-256: `{data['raw_response_sha256']}`\n")
+              if data.get("raw_response_sha256"):
+                  out.write(f"- Raw response SHA-256: `{data['raw_response_sha256']}`\n")
               for row in data.get("results", []):
                   out.write(f"- Add `{row['fixture_id']}`: {row['home']} {row['home_goals']}-{row['away_goals']} {row['away']}\n")
               for row in data.get("corrections", []):
@@ -83,7 +93,7 @@ jobs:
         env:
           UPDATE_PATH: ${{ steps.fetch.outputs.output }}
       - name: Open or update result PR
-        if: steps.fetch.outputs.changed == 'true'
+        if: steps.fetch.outputs.changed == 'true' || steps.knockout.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
           branch: automation/wc2026-results
@@ -96,3 +106,4 @@ jobs:
             data/world_cup_2026/snapshot.json
             data/world_cup_2026/backups/*.json
             data/world_cup_2026/result_updates/*.json
+            data/world_cup_2026/knockout.json

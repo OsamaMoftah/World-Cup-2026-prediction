@@ -34,6 +34,33 @@ class TournamentFixture(BaseModel):
         return self.home_goals is not None and self.away_goals is not None
 
 
+class KnockoutFixture(BaseModel):
+    fixture_id: str
+    match_number: int = Field(ge=73, le=104)
+    stage: str
+    date: date
+    kickoff_utc: datetime | None = None
+    home: str
+    away: str
+    home_goals: int | None = Field(default=None, ge=0)
+    away_goals: int | None = Field(default=None, ge=0)
+    winner: str | None = None
+    provider_match_id: str | None = None
+    provider_status: str | None = None
+
+    @property
+    def played(self) -> bool:
+        return self.home_goals is not None and self.away_goals is not None
+
+    @property
+    def resolved(self) -> bool:
+        return self.home not in {"TBD", "Semifinal 2 Winner", "Semifinal 2 Loser"} and self.away not in {
+            "TBD",
+            "Semifinal 2 Winner",
+            "Semifinal 2 Loser",
+        }
+
+
 class Standing(BaseModel):
     team: str
     played: int = 0

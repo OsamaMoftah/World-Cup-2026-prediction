@@ -105,13 +105,12 @@ def test_host_flag_does_not_apply_an_ungated_rating_boost():
     assert mexico.rating == mexico.elo
 
 
-def test_upcoming_html_reports_completed_group_stage():
+def test_upcoming_html_reports_live_knockout_stage():
     repository = TournamentRepository()
     html = upcoming_html(repository, mode="compact")
 
-    assert "All group-stage fixtures have been played" in html
-    assert "Check the knockout bracket for upcoming matches" in html
-    assert "What the model predicts next" not in html
+    assert "What the model predicts next" in html
+    assert "Final scenarios" in html
 
 
 def test_confidence_tiers_distinguish_signal_strength():

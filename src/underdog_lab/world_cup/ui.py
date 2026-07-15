@@ -140,15 +140,24 @@ def upcoming_html(repository: "TournamentRepository", mode: str = "probability")
     from underdog_lab.world_cup.forecasting import match_forecast
 
     unplayed = [f for f in repository.fixtures if not f.played]
-    # Show next 10 upcoming fixtures, sorted by date
-    upcoming = sorted(unplayed, key=lambda f: (f.date, f.group, f.matchday))[:10]
+    knockout = [
+        _knockout_as_fixture(f)
+        for f in repository.knockout_fixtures
+        if not f.played
+        and f.home in repository.team_by_name
+        and f.away in repository.team_by_name
+    ]
+    upcoming = sorted(
+        [*unplayed, *knockout], key=lambda f: (f.date, f.group, f.matchday)
+    )[:10]
+    final_scenarios = _final_scenarios(repository)
 
     if not upcoming:
         return """
         <section class="lab-card">
           <div class="eyebrow">Upcoming matches</div>
-          <h2>All group-stage fixtures have been played</h2>
-          <p class="context">Check the knockout bracket for upcoming matches.</p>
+          <h2>No resolved fixture is next</h2>
+          <p class="context">The live bracket is complete through the semifinal. The final forecast below is conditional on semifinal 2.</p>
         </section>
         """
 
@@ -161,13 +170,54 @@ def upcoming_html(repository: "TournamentRepository", mode: str = "probability")
     <section class="lab-card" style="margin-bottom:18px; border-color:rgba(178,34,52,.25)">
       <div class="eyebrow">Upcoming matches</div>
       <h2>What the model predicts next</h2>
-      <p class="context">Next {len(upcoming)} unplayed group-stage fixtures with
+      <p class="context">Next {len(upcoming)} unplayed tournament fixtures with
       Elo-driven Dixon-Coles probabilities. Probability view shows the full
       distribution; compact view summarizes how concentrated the model output
       is without presenting it as real-world certainty or a betting pick.</p>
       {''.join(rows)}
+      {final_scenarios}
     </section>
     """
+
+
+def _knockout_as_fixture(fixture) -> TournamentFixture:
+    return TournamentFixture(
+        fixture_id=fixture.fixture_id,
+        group=fixture.stage.replace("_", " ").title(),
+        matchday=fixture.match_number,
+        date=fixture.date,
+        home=fixture.home,
+        away=fixture.away,
+        home_goals=fixture.home_goals,
+        away_goals=fixture.away_goals,
+    )
+
+
+def _final_scenarios(repository: "TournamentRepository") -> str:
+    final = next((f for f in repository.knockout_fixtures if f.stage == "final"), None)
+    semifinal = next((f for f in repository.knockout_fixtures if f.match_number == 102), None)
+    if final is None or final.played or final.home not in repository.team_by_name or semifinal is None:
+        return ""
+    candidates = [team for team in (semifinal.home, semifinal.away) if team in repository.team_by_name]
+    if not candidates:
+        return ""
+    cards = []
+    for opponent in candidates:
+        fixture = TournamentFixture(
+            fixture_id="conditional-final",
+            group="Final scenario",
+            matchday=104,
+            date=final.date,
+            home=final.home,
+            away=opponent,
+        )
+        forecast = match_forecast(fixture, repository.team_by_name)
+        cards.append(
+            f"<div class='forecast-card' style='margin-top:8px'><div class='match-meta'>Conditional final · if {html.escape(opponent)} wins semifinal 2</div>"
+            f"<div class='teams' style='margin:8px 0'><div class='team'>{team_label(final.home)}</div><div class='versus'>VS</div><div class='team'>{team_label(opponent)}</div></div>"
+            f"<div class='context'>Model win probabilities: {forecast.p_home:.0%} {team_label(final.home)} · {forecast.p_draw:.0%} draw · {forecast.p_away:.0%} {team_label(opponent)}</div></div>"
+        )
+    return "<div class='eyebrow' style='margin-top:14px'>Final scenarios</div>" + "".join(cards)
 
 
 def fixture_label(fixture: TournamentFixture) -> str:
