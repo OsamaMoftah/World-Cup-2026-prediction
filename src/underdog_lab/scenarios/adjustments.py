@@ -129,6 +129,18 @@ def apply_extraction(
 
         rule = RULES[factor.factor_type]
         weight = factor.severity * factor.certainty
+        if weight < 0.05:
+            adjustments.append(
+                AppliedAdjustment(
+                    factor=factor,
+                    applied=False,
+                    explanation=(
+                        "Severity × certainty is below the minimum "
+                        "0.05 confidence weight."
+                    ),
+                )
+            )
+            continue
         home_multiplier, away_multiplier = _multipliers(factor, rule, weight)
         home *= home_multiplier
         away *= away_multiplier

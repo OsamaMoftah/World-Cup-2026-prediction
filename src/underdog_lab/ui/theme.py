@@ -298,6 +298,39 @@ footer {
   font-weight: 700;
 }
 
+.stat-legend {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.stat-legend-title {
+  color: var(--ink);
+  font-family: 'Geist Mono', monospace !important;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stat-legend-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 8px;
+}
+
+.stat-legend-item {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.stat-legend-item strong {
+  margin-right: 4px;
+  color: var(--red-dark);
+  font-family: 'Geist Mono', monospace !important;
+  font-size: 11px;
+}
+
 .match-meta {
   font-size: 12px;
 }

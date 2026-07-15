@@ -494,6 +494,35 @@ def _player_card_html(rank: int, row: dict, *, rating_key: str, rating_label: st
     """
 
 
+def player_stat_legend_html() -> str:
+    stats = (
+        ("OVR", "overall rating"),
+        ("POT", "potential rating"),
+        ("PAC", "pace"),
+        ("SHO", "shooting"),
+        ("PAS", "passing"),
+        ("DRI", "dribbling"),
+        ("DEF", "defending"),
+        ("PHY", "physical"),
+        ("DIV", "goalkeeper diving"),
+        ("HAN", "goalkeeper handling"),
+        ("KIC", "goalkeeper kicking"),
+        ("REF", "goalkeeper reflexes"),
+        ("SPD", "goalkeeper speed"),
+        ("POS", "goalkeeper positioning"),
+    )
+    items = "".join(
+        f'<span class="stat-legend-item"><strong>{abbr}</strong>{meaning}</span>'
+        for abbr, meaning in stats
+    )
+    return f"""
+    <section class="stat-legend" aria-label="Player card abbreviations">
+      <strong class="stat-legend-title">Card key</strong>
+      <div class="stat-legend-grid">{items}</div>
+    </section>
+    """
+
+
 def _award_section_html(
     title: str,
     description: str,
@@ -542,6 +571,7 @@ def awards_html(
       blends those ratings with how far the bracket simulation above expects
       that player's team to go. Treat it as a shortlist ranking, not a
       betting line or an official FIFA prediction.</p>
+      {player_stat_legend_html()}
     </section>
     """
     return intro + "".join(

@@ -83,6 +83,28 @@ def test_unknown_team_is_not_applied(neutral_match):
     assert result.lambda_away == neutral_match.lambda_away
 
 
+def test_zero_weight_factor_is_not_applied(neutral_match):
+    result = apply_extraction(
+        neutral_match,
+        ScenarioExtraction(
+            factors=[
+                ExtractedFactor(
+                    factor_type=FactorType.HOME_ADVANTAGE,
+                    team="home",
+                    severity=0.0,
+                    certainty=0.0,
+                    evidence="uncertain claim",
+                )
+            ]
+        ),
+    )
+
+    assert result.lambda_home == neutral_match.lambda_home
+    assert result.lambda_away == neutral_match.lambda_away
+    assert result.adjustments[0].applied is False
+    assert "below the minimum" in result.adjustments[0].explanation
+
+
 def test_duplicate_factor_does_not_stack(neutral_match):
     factor = ExtractedFactor(
         factor_type=FactorType.FATIGUE_DISADVANTAGE,

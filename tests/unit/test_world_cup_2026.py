@@ -57,6 +57,15 @@ def test_ui_uses_pills_only_for_compact_status_and_keeps_controls_consistent():
     assert ".factor-chip" in css
 
 
+def test_player_stat_legend_defines_card_abbreviations():
+    from underdog_lab.world_cup.ui import player_stat_legend_html
+
+    html = player_stat_legend_html()
+
+    for label in ("OVR", "POT", "PAC", "SHO", "PAS", "DRI", "DEF", "PHY"):
+        assert f">{label}</strong>" in html
+
+
 def test_repository_contains_full_group_stage():
     repository = TournamentRepository()
 
