@@ -1,8 +1,8 @@
 {
   "schema_version": "knockout-v1",
   "provider": "espn",
-  "fetched_at": "2026-07-17T22:41:11.582994+00:00",
-  "raw_response_sha256": "1f48541636dfd5397da93077cc3d5872b2b1dc66c4a307636998a03d916ed86c",
+  "fetched_at": "2026-07-17T23:21:44.112244+00:00",
+  "raw_response_sha256": "3fc080ca8fc5a282479062feed174a0ef77b26d759ad9c3395595d3373903c88",
   "matches": [
     {
       "fixture_id": "WC26-073",
@@ -452,5 +452,6 @@
       "provider_match_id": "760517",
       "provider_status": "STATUS_SCHEDULED"
     }
-  ]
+  ],
+  "raw_response_path": "data/world_cup_2026/result_updates/espn-knockout-20260717T232144Z.json"
 }

@@ -17,6 +17,27 @@ from underdog_lab.world_cup.flags import team_label
 from underdog_lab.world_cup.predictions import scored_track_records
 
 EXTERNAL_FORECASTS_PATH = Path("data/world_cup_2026/external_forecasts.json")
+FROZEN_LONG_RANGE_FORECAST_PATH = Path("predictions/2026-06-13/forecast.json")
+
+
+@lru_cache(maxsize=1)
+def frozen_long_range_top4() -> tuple[str, ...]:
+    """The four highest champion-probability teams from the frozen June 13
+    tournament forecast. Read from the immutable artifact rather than
+    hardcoded, so the claim in the benchmark card is exactly as strong as
+    the checked-in evidence."""
+    if not FROZEN_LONG_RANGE_FORECAST_PATH.exists():
+        return ()
+    payload = json.loads(
+        FROZEN_LONG_RANGE_FORECAST_PATH.read_text(encoding="utf-8")
+    )
+    champion = payload.get("champion_probabilities", {})
+    return tuple(
+        team
+        for team, _ in sorted(
+            champion.items(), key=lambda item: item[1], reverse=True
+        )[:4]
+    )
 
 
 @lru_cache(maxsize=1)
@@ -146,34 +167,45 @@ def tournament_comparison_html(probabilities: dict, repository) -> str:
 
 def tournament_benchmark_html(repository) -> str:
     """Show the honest headline score and the tournament-readiness signal."""
-    records = scored_track_records(repository.fixtures, repository.team_by_name)
+    records = scored_track_records(
+        repository.tournament_fixtures, repository.team_by_name
+    )
     summary = records["prospective"]
-    semifinalists = {"Spain", "England", "Argentina", "France"}
-    captured = set()
+    long_range_top4 = set(frozen_long_range_top4())
+    actual_semifinalists = set()
     for match in repository.knockout_fixtures:
-        if match.stage == "semifinal":
-            captured.update((match.home, match.away))
-    semifinal_hit = len(captured & semifinalists)
+        if match.stage == "semifinal" and match.resolved:
+            actual_semifinalists.update((match.home, match.away))
+    semifinal_hit = (
+        len(actual_semifinalists & long_range_top4)
+        if actual_semifinalists and long_range_top4
+        else 0
+    )
     return f"""
     <section class="lab-card" style="border-color:rgba(53,114,74,.35)">
       <div class="eyebrow">Performance spotlight</div>
       <h2>What went well — and what is still unproven</h2>
-      <p class="context">Our pre-match group-stage forecasts currently have
+      <p class="context">Our verified pre-match forecasts currently have
       <strong>{summary['accuracy']:.1%}</strong> top-pick accuracy across
-      <strong>{summary['n']}</strong> verified predictions, with
+      <strong>{summary['n']}</strong> predictions, with
       <strong>{summary['log_loss_skill_vs_uniform']:+.1%}</strong> log-loss
-      skill versus an equal 1/3 baseline. The model also named
-      <strong>{semifinal_hit}/4</strong> current semifinalists in its dated
-      long-range picture. That is encouraging directional evidence, not proof
-      that we beat the market; the final-horizon score is still pending.</p>
+      skill versus an equal 1/3 baseline. The four highest
+      champion-probability teams in the frozen June 13 tournament forecast
+      ({', '.join(sorted(long_range_top4))}) include
+      <strong>{semifinal_hit}/4</strong> of the actual semifinalists. That
+      is encouraging directional evidence, not proof that we beat the
+      market; note the June 13 batch carries the pre-registration caveats
+      documented in predictions/INTEGRITY_NOTES.md.</p>
       <div class="score-grid">
         <div class="score-box"><span>Verified predictions</span><strong>{summary['n']}</strong></div>
         <div class="score-box"><span>Top-pick accuracy</span><strong>{summary['accuracy']:.1%}</strong></div>
         <div class="score-box"><span>Skill vs equal odds</span><strong>{summary['log_loss_skill_vs_uniform']:+.1%}</strong></div>
         <div class="score-box"><span>Semifinalists identified</span><strong>{semifinal_hit}/4</strong></div>
       </div>
-      <p class="small">Knockout results are now ingested from the live ESPN
-      bracket. The final forecast is conditional on semifinal 2 and will be
-      scored only after the final whistle.</p>
+      <p class="small">Knockout results are ingested from the live ESPN
+      bracket with the raw provider response checked in beside the snapshot.
+      The third-place and final forecasts are pre-registered as immutable
+      artifacts under predictions/live/ and are scored only after the final
+      whistle.</p>
     </section>
     """

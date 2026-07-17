@@ -7,8 +7,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from underdog_lab.world_cup.data import TournamentRepository
-from underdog_lab.world_cup.forecasting import match_forecast
+from underdog_lab.world_cup.forecasting import (
+    knockout_advance_probability,
+    match_forecast,
+)
 from underdog_lab.world_cup.integrity import validate_snapshot_integrity
+from underdog_lab.world_cup.models import KnockoutFixture
 from underdog_lab.world_cup.provenance import forecast_provenance
 
 
@@ -29,11 +33,20 @@ def generate_live_forecast(
     repository = TournamentRepository(snapshot_path=snapshot_path)
     validate_snapshot_integrity(repository, now=now)
     fixture = next(
-        (item for item in repository.fixtures if item.fixture_id == fixture_id),
+        (
+            item
+            for item in repository.tournament_fixtures
+            if item.fixture_id == fixture_id
+        ),
         None,
     )
     if fixture is None:
         raise ValueError(f"Unknown fixture: {fixture_id}")
+    is_knockout = isinstance(fixture, KnockoutFixture)
+    if is_knockout and not fixture.resolved:
+        raise ValueError(
+            f"{fixture_id} teams are not both resolved; refusing to forecast"
+        )
     if fixture.played:
         raise ValueError(f"{fixture_id} already has a recorded result")
     if fixture.kickoff_utc is None:
@@ -51,7 +64,7 @@ def generate_live_forecast(
     forecast = match_forecast(fixture, repository.team_by_name)
     fixture_payload = {
         "fixture_id": fixture.fixture_id,
-        "group": fixture.group,
+        "group": fixture.stage if is_knockout else fixture.group,
         "date": fixture.date.isoformat(),
         "kickoff_utc": fixture.kickoff_utc.isoformat(),
         "home": fixture.home,
@@ -62,6 +75,26 @@ def generate_live_forecast(
         "lambda_home": round(forecast.lambda_home, 8),
         "lambda_away": round(forecast.lambda_away, 8),
     }
+    if is_knockout:
+        advance_home = knockout_advance_probability(
+            fixture.home, fixture.away, repository.team_by_name
+        )
+        fixture_payload.update(
+            {
+                "stage": fixture.stage,
+                "match_number": fixture.match_number,
+                "probability_note": (
+                    "p_home/p_draw/p_away are regulation-90-minute 1X2 "
+                    "probabilities and are what gets scored. "
+                    "p_home_advance/p_away_advance additionally resolve a "
+                    "regulation draw with the Elo-weighted "
+                    "extra-time/penalties rule used by the tournament "
+                    "simulation; they are informative, not scored."
+                ),
+                "p_home_advance": round(advance_home, 8),
+                "p_away_advance": round(1.0 - advance_home, 8),
+            }
+        )
     payload = {
         "schema_version": "live-forecast-v2",
         "forecast_date": fixture.date.isoformat(),

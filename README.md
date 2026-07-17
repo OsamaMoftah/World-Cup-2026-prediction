@@ -48,7 +48,10 @@ An interactive, local-first Gradio application where users:
 - select a real or historical match;
 - inspect a transparent statistical forecast;
 - describe a counterfactual scenario in natural language;
-- watch a small local model convert that scenario into validated semantic football factors;
+- watch a small local model attempt to extract typed semantic football factors
+  from it (an experimental component: measured factor micro-F1 is low — see
+  `results/ship_decision.json` — and a deterministic keyword fallback handles
+  extraction failures);
 - compare the updated probability distribution with the baseline;
 - make their own forecast and receive a proper-scoring-rule score.
 
@@ -61,7 +64,7 @@ The language model never invents probabilities or numerical model deltas. It ext
 ## Submission Links
 
 - **Primary Space:** https://huggingface.co/spaces/sammoftah/World-Cup-2026-prediction
-- **Source:** https://github.com/OsamaMoftah/World-Cup-2026-predicition
+- **Source:** https://github.com/OsamaMoftah/World-Cup-2026-prediction
 - **Demo video:** `PENDING: add a public demo-video URL before final validation`
 - **Social post:** `PENDING: add the public social-media post URL before final validation`
 - **Team usernames:** `sammoftah`
@@ -169,6 +172,10 @@ and keeps current-model retrospective replay clearly separate.
 
 The result path is intentionally semi-automatic:
 
+0. `scripts/build_knockout_snapshot.py` refreshes the knockout bracket from
+   ESPN and persists the exact raw provider response it hashed into
+   `data/world_cup_2026/result_updates/espn-knockout-<timestamp>.json`, so
+   `raw_response_sha256` in `knockout.json` stays independently verifiable.
 1. `.github/workflows/result-check.yml` polls every three hours. It uses
    football-data.org when `FOOTBALL_DATA_API_KEY` is configured and otherwise
    falls back to ESPN's public FIFA World Cup scoreboard feed.

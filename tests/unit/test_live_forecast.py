@@ -52,3 +52,38 @@ def test_live_forecast_can_reproduce_second_frozen_fixture(tmp_path):
     payload = json.loads(forecast_path.read_text(encoding="utf-8"))
     assert payload["fixtures"][0]["fixture_id"] == "WC26-013"
     assert payload["information_cutoff"] == "2026-06-13T19:30:00Z"
+
+
+def test_live_forecast_supports_resolved_knockout_fixture(tmp_path):
+    from underdog_lab.world_cup.data import TournamentRepository
+
+    repository = TournamentRepository()
+    final = next(
+        fixture
+        for fixture in repository.knockout_fixtures
+        if fixture.stage == "final"
+    )
+    if final.played:
+        pytest.skip("final already has a recorded result in the snapshot")
+
+    forecast_path, manifest_path = generate_live_forecast(
+        final.fixture_id,
+        tmp_path / "proof",
+        now=final.kickoff_utc.replace(hour=0, minute=0),
+    )
+
+    payload = json.loads(forecast_path.read_text(encoding="utf-8"))
+    prediction = payload["fixtures"][0]
+    assert prediction["stage"] == "final"
+    assert prediction["match_number"] == 104
+    assert abs(
+        prediction["p_home"] + prediction["p_draw"] + prediction["p_away"] - 1.0
+    ) < 1e-6
+    assert abs(
+        prediction["p_home_advance"] + prediction["p_away_advance"] - 1.0
+    ) < 1e-6
+    assert "regulation-90-minute" in prediction["probability_note"]
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest["sha256"] == hashlib.sha256(
+        forecast_path.read_bytes()
+    ).hexdigest()

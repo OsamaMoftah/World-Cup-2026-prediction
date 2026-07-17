@@ -221,7 +221,12 @@ def test_upcoming_html_reports_live_knockout_stage():
     html = upcoming_html(repository, mode="compact")
 
     assert "What the model predicts next" in html
-    assert "Final scenarios" in html
+    # Both finalists are resolved in the checked-in bracket, so the final
+    # must appear as a direct fixture card with knockout context — never as
+    # a stale "conditional final" scenario for an already-played semifinal.
+    assert "Conditional final" not in html
+    assert "Match 104" in html
+    assert "to advance" in html
 
 
 def test_confidence_tiers_distinguish_signal_strength():
@@ -327,3 +332,24 @@ def test_knockout_path_contains_every_match_after_round_of_32():
     assert KNOCKOUT_PATH["round_of_16"][0] == (89, 73, 75)
     assert THIRD_PLACE_MATCH == (103, 101, 102)
     assert KNOCKOUT_PATH["champion"] == ((104, 101, 102),)
+
+
+def test_benchmark_semifinalists_derive_from_frozen_artifact():
+    import json
+    from pathlib import Path
+
+    from underdog_lab.world_cup.comparison import frozen_long_range_top4
+
+    payload = json.loads(
+        Path("predictions/2026-06-13/forecast.json").read_text(encoding="utf-8")
+    )
+    expected = tuple(
+        team
+        for team, _ in sorted(
+            payload["champion_probabilities"].items(),
+            key=lambda item: item[1],
+            reverse=True,
+        )[:4]
+    )
+    assert frozen_long_range_top4() == expected
+    assert len(expected) == 4

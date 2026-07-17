@@ -25,11 +25,13 @@ def _metrics(summary: dict) -> dict:
 def main() -> int:
     repository = TournamentRepository()
     records = scored_track_records(
-        repository.fixtures,
+        repository.tournament_fixtures,
         repository.team_by_name,
     )
     report = {
-        "recorded_fixtures": sum(fixture.played for fixture in repository.fixtures),
+        "recorded_fixtures": sum(
+            fixture.played for fixture in repository.tournament_fixtures
+        ),
         "artifact_audit": records["artifact_audit"],
         "coverage": records["coverage"],
         "prospective_latest": _metrics(records["prospective"]),

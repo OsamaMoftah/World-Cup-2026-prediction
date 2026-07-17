@@ -30,6 +30,13 @@ def main() -> int:
         type=Path,
         default=Path("data/world_cup_2026/provider_mappings/espn.json"),
     )
+    parser.add_argument(
+        "--raw-dir",
+        type=Path,
+        default=Path("data/world_cup_2026/result_updates"),
+        help="Directory where the raw provider response is persisted so the "
+        "snapshot's raw_response_sha256 stays independently verifiable.",
+    )
     args = parser.parse_args()
     fetched_at = datetime.now(timezone.utc)
     request = Request(ENDPOINT, headers={"User-Agent": "underdog-lab/1.0"})
@@ -39,6 +46,16 @@ def main() -> int:
     snapshot = normalize_espn_knockout_response(
         payload, mapping.get("aliases", {}), fetched_at=fetched_at
     )
+    args.raw_dir.mkdir(parents=True, exist_ok=True)
+    raw_path = args.raw_dir / (
+        f"espn-knockout-{fetched_at.strftime('%Y%m%dT%H%M%SZ')}.json"
+    )
+    # Persist the exact canonical serialization the normalizer hashes into
+    # raw_response_sha256, so the digest stays independently verifiable.
+    raw_path.write_bytes(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    )
+    snapshot["raw_response_path"] = str(raw_path)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(
         json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"

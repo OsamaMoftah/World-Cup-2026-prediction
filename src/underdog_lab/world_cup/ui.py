@@ -53,11 +53,24 @@ def normalize_forecast_view(mode: str | None) -> str:
     return aliases.get(normalized, "probability")
 
 
+def _meta_label(fixture: TournamentFixture) -> str:
+    if fixture.matchday >= 73:
+        return (
+            f"{fixture.date.strftime('%a %b %d')} · {fixture.group}"
+            f" · Match {fixture.matchday}"
+        )
+    return (
+        f"{fixture.date.strftime('%a %b %d')} · Group {fixture.group}"
+        f" · Matchday {fixture.matchday}"
+    )
+
+
 def _fixture_card(
     fixture: TournamentFixture,
     forecast,
     *,
     mode: str,
+    extra_note: str = "",
 ) -> str:
     scorelines = top_scorelines(forecast)
     best_score, best_score_probability = scorelines[0]
@@ -79,7 +92,7 @@ def _fixture_card(
         <div class="forecast-card pick-card" style="margin-bottom:10px">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap">
             <div style="min-width:0">
-              <div class="match-meta">{fixture.date.strftime("%a %b %d")} · Group {fixture.group} · Matchday {fixture.matchday}</div>
+              <div class="match-meta">{_meta_label(fixture)}</div>
               <div class="teams" style="margin:8px 0">
                 <div class="team">{team_label(fixture.home)}</div>
                 <div class="versus">VS</div>
@@ -91,6 +104,7 @@ def _fixture_card(
                 ({best_score_probability:.0%}). Top three scorelines:
                 {scoreline_summary}
               </div>
+              {extra_note}
             </div>
             <div class="{pick_class}">
               <div class="pick-label">{html.escape(signal_label)}</div>
@@ -121,7 +135,7 @@ def _fixture_card(
     <div class="forecast-card" style="margin-bottom:10px">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap">
         <div style="min-width:0">
-          <div class="match-meta">{fixture.date.strftime("%a %b %d")} · Group {fixture.group} · Matchday {fixture.matchday}</div>
+          <div class="match-meta">{_meta_label(fixture)}</div>
           <div class="teams" style="margin:8px 0">
             <div class="team">{team_label(fixture.home)}</div>
             <div class="versus">VS</div>
@@ -136,6 +150,7 @@ def _fixture_card(
       </div>
       {''.join(rows)}
       <div class="forecast-note">Top three scorelines: {scoreline_summary}</div>
+      {extra_note}
     </div>
     """
 
@@ -161,15 +176,30 @@ def upcoming_html(repository: "TournamentRepository", mode: str = "probability")
         return """
         <section class="lab-card player-awards-section">
           <div class="eyebrow">Upcoming matches</div>
-          <h2>No resolved fixture is next</h2>
-          <p class="context">The live bracket is complete through the semifinal. The final forecast below is conditional on semifinal 2.</p>
+          <h2>No unplayed fixture remains</h2>
+          <p class="context">Every recorded tournament fixture has a result. See the Track Record tab for how the pre-registered forecasts scored.</p>
         </section>
         """
+
+    from underdog_lab.world_cup.forecasting import knockout_advance_probability
 
     rows = []
     for f in upcoming:
         fc = match_forecast(f, repository.team_by_name)
-        rows.append(_fixture_card(f, fc, mode=mode))
+        extra_note = ""
+        if f.matchday >= 73:
+            advance_home = knockout_advance_probability(
+                f.home, f.away, repository.team_by_name
+            )
+            extra_note = (
+                "<div class='forecast-note'>Knockout tie — the bars above are "
+                "regulation-90-minute probabilities. If it goes to extra time "
+                "and penalties: <strong>"
+                f"{team_label(f.home)} {advance_home:.0%}</strong> · <strong>"
+                f"{team_label(f.away)} {1 - advance_home:.0%}</strong> "
+                "to advance (Elo-weighted draw resolution).</div>"
+            )
+        rows.append(_fixture_card(f, fc, mode=mode, extra_note=extra_note))
 
     return f"""
     <section class="lab-card" style="margin-bottom:18px; border-color:rgba(178,34,52,.25)">
@@ -199,9 +229,15 @@ def _knockout_as_fixture(fixture) -> TournamentFixture:
 
 
 def _final_scenarios(repository: "TournamentRepository") -> str:
+    """Conditional final cards, shown only while semifinal 2 is undecided.
+
+    Once both finalists are resolved, the final appears as a regular
+    upcoming-fixture card and the conditional scenarios would be stale."""
     final = next((f for f in repository.knockout_fixtures if f.stage == "final"), None)
     semifinal = next((f for f in repository.knockout_fixtures if f.match_number == 102), None)
     if final is None or final.played or final.home not in repository.team_by_name or semifinal is None:
+        return ""
+    if semifinal.played or final.resolved:
         return ""
     candidates = [team for team in (semifinal.home, semifinal.away) if team in repository.team_by_name]
     if not candidates:

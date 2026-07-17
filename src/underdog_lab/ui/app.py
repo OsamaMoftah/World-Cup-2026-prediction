@@ -244,7 +244,9 @@ def reveal(
 
 
 def track_record_html(repository) -> str:
-    records = scored_track_records(repository.fixtures, repository.team_by_name)
+    records = scored_track_records(
+        repository.tournament_fixtures, repository.team_by_name
+    )
 
     def section(title: str, description: str, summary: dict) -> str:
         rows = "".join(

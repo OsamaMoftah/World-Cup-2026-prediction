@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-import math
 import random
 from collections import Counter, defaultdict
-from datetime import date
-
 from underdog_lab.forecasting.poisson import poisson_probability
 from underdog_lab.world_cup.bracket import KNOCKOUT_PATH, build_round_of_32
 from underdog_lab.world_cup.data import TournamentRepository
-from underdog_lab.world_cup.forecasting import match_forecast
-from underdog_lab.world_cup.models import Standing, TournamentFixture
+from underdog_lab.world_cup.forecasting import (
+    knockout_advance_probability,
+    match_forecast,
+)
+from underdog_lab.world_cup.models import Standing
 from underdog_lab.world_cup.standings import rank_standings
 
 
@@ -51,22 +51,7 @@ def _knockout_win_probability(
     second: str,
     repository: TournamentRepository,
 ) -> float:
-    fixture = TournamentFixture(
-        fixture_id="simulation",
-        group="-",
-        matchday=0,
-        date=date(2026, 6, 28),
-        home=first,
-        away=second,
-    )
-    forecast = match_forecast(fixture, repository.team_by_name)
-    rating_first = repository.team_by_name[first].rating
-    rating_second = repository.team_by_name[second].rating
-    elo_probability = 1.0 / (
-        1.0 + math.pow(10.0, (rating_second - rating_first) / 400.0)
-    )
-    draw_resolution = 0.5 + 0.35 * (elo_probability - 0.5)
-    return forecast.p_home + forecast.p_draw * draw_resolution
+    return knockout_advance_probability(first, second, repository.team_by_name)
 
 
 def _recorded_knockout_winner(

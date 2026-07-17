@@ -350,7 +350,7 @@ def _score_record(
     )
     return {
         "fixture_id": fixture.fixture_id,
-        "group": fixture.group,
+        "group": getattr(fixture, "group", None) or getattr(fixture, "stage", "?"),
         "home": fixture.home,
         "away": fixture.away,
         "score": f"{fixture.home_goals}-{fixture.away_goals}",

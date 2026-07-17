@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from underdog_lab.forecasting.calibration import apply_temperature
 from underdog_lab.forecasting.dixon_coles import (
     DixonColesEloModel,
@@ -42,6 +44,30 @@ def match_forecast(
     away = team_by_name[fixture.away]
     forecast = MODEL.forecast(home.rating, away.rating, neutral_venue=True)
     return apply_temperature(forecast, CALIBRATION_TEMPERATURE)
+
+
+def knockout_advance_probability(
+    home: str,
+    away: str,
+    team_by_name: dict[str, TournamentTeam],
+) -> float:
+    """Probability that `home` advances from a knockout tie.
+
+    Regulation 1X2 comes from the calibrated Dixon-Coles model; a regulation
+    draw is resolved by an Elo-weighted extra-time/penalties split (the same
+    rule the tournament simulation uses).
+    """
+    home_team = team_by_name[home]
+    away_team = team_by_name[away]
+    forecast = apply_temperature(
+        MODEL.forecast(home_team.rating, away_team.rating, neutral_venue=True),
+        CALIBRATION_TEMPERATURE,
+    )
+    elo_probability = 1.0 / (
+        1.0 + math.pow(10.0, (away_team.rating - home_team.rating) / 400.0)
+    )
+    draw_resolution = 0.5 + 0.35 * (elo_probability - 0.5)
+    return forecast.p_home + forecast.p_draw * draw_resolution
 
 
 def top_scorelines(forecast, limit: int = 3) -> list[tuple[str, float]]:
