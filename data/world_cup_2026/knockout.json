@@ -418,11 +418,11 @@
       "kickoff_utc": "2026-07-15T19:00:00+00:00",
       "home": "England",
       "away": "Argentina",
-      "home_goals": null,
-      "away_goals": null,
-      "winner": null,
+      "home_goals": 1,
+      "away_goals": 2,
+      "winner": "Argentina",
       "provider_match_id": "760515",
-      "provider_status": "STATUS_SCHEDULED"
+      "provider_status": "STATUS_FULL_TIME"
     },
     {
       "fixture_id": "WC26-103",
@@ -431,7 +431,7 @@
       "date": "2026-07-18",
       "kickoff_utc": "2026-07-18T21:00:00+00:00",
       "home": "France",
-      "away": "Semifinal 2 Loser",
+      "away": "England",
       "home_goals": null,
       "away_goals": null,
       "winner": null,
@@ -445,7 +445,7 @@
       "date": "2026-07-19",
       "kickoff_utc": "2026-07-19T19:00:00+00:00",
       "home": "Spain",
-      "away": "Semifinal 2 Winner",
+      "away": "Argentina",
       "home_goals": null,
       "away_goals": null,
       "winner": null,
