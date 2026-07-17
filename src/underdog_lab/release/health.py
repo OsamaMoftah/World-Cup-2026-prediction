@@ -44,7 +44,7 @@ def application_health(
         errors.append(str(error))
 
     forecast_audit = audit_forecasts(
-        repository.fixtures,
+        repository.tournament_fixtures,
         root / "predictions",
     )
     invalid_artifact_reasons = {
