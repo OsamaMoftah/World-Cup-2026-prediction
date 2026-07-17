@@ -1,8 +1,8 @@
 {
   "schema_version": "knockout-v1",
   "provider": "espn",
-  "fetched_at": "2026-07-15T08:20:39.965447+00:00",
-  "raw_response_sha256": "9e17cb0dc49d288141a75ff811230eed51726f60198351418989305596097cbc",
+  "fetched_at": "2026-07-17T22:41:11.582994+00:00",
+  "raw_response_sha256": "1f48541636dfd5397da93077cc3d5872b2b1dc66c4a307636998a03d916ed86c",
   "matches": [
     {
       "fixture_id": "WC26-073",
