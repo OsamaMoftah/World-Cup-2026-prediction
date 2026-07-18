@@ -510,6 +510,11 @@ def _stat_tier(value: int) -> str:
 
 
 def _player_card_html(rank: int, row: dict, *, rating_key: str, rating_label: str) -> str:
+    campaign_chip = (
+        '<span class="campaign-chip alive">Still playing</span>'
+        if row.get("still_playing")
+        else '<span class="campaign-chip">Campaign over</span>'
+    )
     stat_cells = "".join(
         f"""
         <div class="stat-cell">
@@ -529,7 +534,7 @@ def _player_card_html(rank: int, row: dict, *, rating_key: str, rating_label: st
         <div class="player-card-meta">
           <div class="player-rank">#{rank} shortlist position</div>
           <div class="player-name">{html.escape(row["name"])}</div>
-          <div class="player-team">{team_label(row["team"])}</div>
+          <div class="player-team">{team_label(row["team"])} {campaign_chip}</div>
         </div>
       </div>
       <div class="model-signal model-form">
@@ -641,17 +646,30 @@ def awards_html(
     probabilities: dict[str, dict[str, float]],
 ) -> str:
     rankings = award_predictions(probabilities)
+    still_playing = {
+        team
+        for fixture in repository.knockout_fixtures
+        if not fixture.played
+        for team in (fixture.home, fixture.away)
+        if team in repository.team_by_name
+    }
+    for rows in rankings.values():
+        for row in rows:
+            row["still_playing"] = row["team"] in still_playing
     intro = f"""
     <section class="lab-card player-awards-section" style="border-color:rgba(178,34,52,.25)">
       <div class="eyebrow">Player awards</div>
-      <h2>Who wins the 2026 individual prizes?</h2>
-      <p class="context">35 contenders for the tournament's four big
-      individual prizes, laid out as EA FC-style cards. The OVR/POT badge and
-      PAC/SHO/PAS/DRI/DEF/PHY ratings are our own estimates based on public
-      player ratings, not licensed EA data. The model form signal under each name
-      blends those ratings with how far the bracket simulation above expects
-      that player's team to go. Treat it as a shortlist ranking, not a
-      betting line or an official FIFA prediction.</p>
+      <h2>The mid-June shortlists, held to account</h2>
+      <p class="context">These four shortlists were compiled from public
+      club-season ratings in mid-June, in the opening days of the group
+      stage, and the player data has not been touched since. They do not
+      track tournament goals, assists, or clean sheets &mdash; the only live
+      ingredient is the team-run signal from the bracket simulation above.
+      That is deliberate: rather than quietly rewriting the lists as results
+      came in, we left them frozen so you can judge how far club form plus a
+      bracket forecast gets you once the real awards are handed out. Cards
+      are EA FC-style; the OVR/POT badge and PAC/SHO/PAS/DRI/DEF/PHY ratings
+      are our own estimates, not licensed EA data.</p>
       {player_stat_legend_html()}
       {player_stat_methodology_html()}
     </section>
@@ -660,8 +678,8 @@ def awards_html(
         [
             _award_section_html(
                 "Golden Ball (best player)",
-                "Ranked by overall rating, with a boost for players whose "
-                "team is projected to reach the semifinals or further. A "
+                "Ranked by mid-June club-season rating, boosted for players "
+                "whose team the bracket gives a semifinal-or-further run. A "
                 "deep run means more high-stakes minutes for the voters to "
                 "remember.",
                 rankings["golden_ball"],
@@ -669,13 +687,14 @@ def awards_html(
             _award_section_html(
                 "Golden Boot (top scorer)",
                 "Ranked by club scoring rate and shooting ability, scaled by "
-                "how many matches the simulation expects this player's team "
-                "to play across the group stage and knockouts.",
+                "how many tournament matches the bracket gives this player's "
+                "team. Club form, not tournament goals: the real Golden Boot "
+                "table is the exam this list sits after the final.",
                 rankings["golden_boot"],
             ),
             _award_section_html(
                 "Golden Glove (best goalkeeper)",
-                "Ranked by overall rating and expected minutes, with a bonus "
+                "Ranked by mid-June rating and expected minutes, with a bonus "
                 "for teams projected to go deep. Knockout clean sheets carry "
                 "more weight for this award than group-stage ones.",
                 rankings["golden_glove"],

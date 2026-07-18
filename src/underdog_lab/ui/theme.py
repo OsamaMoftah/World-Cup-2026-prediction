@@ -786,6 +786,27 @@ tbody tr:hover {
   font-weight: 600;
 }
 
+.campaign-chip {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 1px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font-family: 'Geist Mono', monospace !important;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
+.campaign-chip.alive {
+  border-color: rgba(36, 137, 201, 0.4);
+  color: var(--blue-dark, #24547a);
+  background: var(--blue-soft);
+}
+
 .player-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

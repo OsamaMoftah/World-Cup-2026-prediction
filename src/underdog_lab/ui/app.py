@@ -307,13 +307,20 @@ def track_record_html(repository) -> str:
 
     intro = evidence_summary_html(records)
 
+    horizon_titles = {
+        "final": "Predictions locked within 2 hours of kickoff",
+        "6h": "Predictions locked 2-6 hours before kickoff",
+        "24h": "Predictions locked 6-24 hours before kickoff",
+        "long_range": "Predictions locked more than a day before kickoff",
+    }
     prospective_sections = "".join(
         section(
-            f"Predictions made {horizon.replace('_', ' ')}",
+            horizon_titles.get(horizon, f"Predictions made {horizon}"),
             "Locked in before kickoff and compared to the final score.",
             summary,
         )
         for horizon, summary in records["prospective_by_horizon"].items()
+        if summary["n"]
     )
 
     aggregate = section(
