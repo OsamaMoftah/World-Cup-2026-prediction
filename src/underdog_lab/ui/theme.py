@@ -1124,4 +1124,513 @@ label,
     text-align: left;
   }
 }
+
+/* ==========================================================================
+   Research shell — editorial redesign for Evidence, Beat the Model, Compare.
+   Scoped entirely under .research-shell so the rest of the app (World Cup,
+   Awards, Methodology) keeps its existing punchier visual language.
+   ========================================================================== */
+
+.research-shell {
+  --r-bg: #faf8f3;
+  --r-panel: #fffdf9;
+  --r-ink: #16222f;
+  --r-slate: #5d6a7a;
+  --r-line: #e4e0d5;
+  --r-line-soft: #eeebe1;
+  --r-blue: var(--blue-dark);
+  --r-red: var(--red-dark);
+  --r-green: #2e7d54;
+  --r-green-soft: #eef7f1;
+  --r-serif: Georgia, 'Times New Roman', serif;
+  color: var(--r-ink);
+  font-family: 'Geist', Arial, sans-serif;
+}
+
+/* Soften the shared card system when it appears inside a research page
+   (e.g. the Beat the Model challenge panel), without touching how those
+   same classes look elsewhere (World Cup tab, Player Awards). */
+.research-shell .match-card,
+.research-shell .forecast-card,
+.research-shell .factor-card,
+.research-shell .reveal-card,
+.research-shell .lab-card,
+.research-shell .journey-intro {
+  border-radius: var(--radius-sm);
+  border-color: var(--r-line);
+  background: var(--r-panel);
+  box-shadow: none;
+}
+
+.research-shell .journey-intro {
+  border-left-width: 3px;
+  border-left-color: var(--r-red);
+}
+
+.research-shell .score-box {
+  border-color: var(--r-line);
+  background: var(--r-panel);
+}
+
+.research-shell .score-box strong {
+  color: var(--r-ink);
+}
+
+.research-shell section.r-block {
+  max-width: 980px;
+  margin: 0 auto 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.research-shell section.r-block:first-child {
+  margin-bottom: 30px;
+}
+
+.research-shell section.r-block + section.r-block {
+  padding-top: 32px;
+  border-top: 1px solid var(--r-line);
+}
+
+.r-hero {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.r-hero-main {
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
+.r-hero h1 {
+  font-family: var(--r-serif);
+  font-size: clamp(32px, 4.4vw, 44px);
+  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--r-ink);
+  margin: 0 0 12px;
+}
+
+.r-hero .r-dek {
+  color: var(--r-slate);
+  font-size: 16.5px;
+  line-height: 1.6;
+  max-width: 58ch;
+  margin: 0 0 12px;
+}
+
+.r-hero .r-meta {
+  font-size: 12.5px;
+  color: var(--r-slate);
+}
+
+.r-headstat {
+  flex: 0 0 240px;
+  border: 1px solid var(--r-line);
+  border-radius: var(--radius-sm);
+  background: var(--r-panel);
+  padding: 16px 20px;
+}
+
+.r-headstat .r-k {
+  font-family: 'Geist Mono', monospace !important;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--r-slate);
+}
+
+.r-headstat .r-v {
+  font-family: var(--r-serif);
+  font-size: 34px;
+  line-height: 1.1;
+  margin: 4px 0 3px;
+  color: var(--r-ink);
+}
+
+.r-headstat .r-v.good { color: var(--r-green); }
+.r-headstat .r-v.bad { color: var(--r-red); }
+
+.r-headstat .r-s {
+  font-size: 12px;
+  color: var(--r-slate);
+  line-height: 1.5;
+}
+
+.r-secno {
+  display: inline-block;
+  font-family: 'Geist Mono', monospace !important;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--r-red);
+  margin-bottom: 4px;
+}
+
+.research-shell h2 {
+  font-family: var(--r-serif);
+  font-size: 23px;
+  font-weight: 700;
+  color: var(--r-ink);
+  margin: 0 0 4px;
+}
+
+.research-shell .r-sub {
+  color: var(--r-slate);
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0 0 18px;
+  max-width: 72ch;
+}
+
+.r-statrow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  border: 1px solid var(--r-line);
+  background: var(--r-panel);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.r-statrow > div {
+  padding: 14px 18px;
+  border-right: 1px solid var(--r-line-soft);
+}
+
+.r-statrow > div:last-child {
+  border-right: 0;
+}
+
+.r-statrow .r-k {
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--r-slate);
+  font-weight: 700;
+  font-family: 'Geist Mono', monospace !important;
+}
+
+.r-statrow .r-v {
+  font-family: var(--r-serif);
+  font-size: 24px;
+  margin: 3px 0 2px;
+  color: var(--r-ink);
+}
+
+.r-statrow .r-s {
+  font-size: 11.5px;
+  color: var(--r-slate);
+  line-height: 1.4;
+}
+
+.research-shell table.r-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--r-panel);
+  border: 1px solid var(--r-line);
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  overflow: hidden;
+}
+
+.research-shell table.r-table th {
+  font-family: 'Geist Mono', monospace !important;
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--r-slate);
+  text-align: left;
+  padding: 9px 13px;
+  border-bottom: 1px solid var(--r-line);
+  font-weight: 700;
+  background: var(--r-bg);
+}
+
+.research-shell table.r-table td {
+  padding: 9px 13px;
+  border-bottom: 1px solid var(--r-line-soft);
+  color: var(--r-ink);
+}
+
+.research-shell table.r-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.research-shell table.r-table td.r-num,
+.research-shell table.r-table th.r-num {
+  text-align: right;
+  font-family: 'Geist Mono', monospace !important;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.research-shell .r-bar {
+  height: 7px;
+  min-width: 90px;
+  background: var(--r-line-soft);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.research-shell .r-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--r-blue);
+}
+
+.research-shell .r-bar.r-gray i { background: #9aa5b1; }
+.research-shell .r-bar.r-red i { background: var(--r-red); }
+
+.r-note {
+  font-size: 12px;
+  color: var(--r-slate);
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+.r-callout {
+  border: 1px solid var(--r-line);
+  border-left: 3px solid var(--r-blue);
+  background: var(--blue-soft);
+  padding: 13px 17px;
+  font-size: 13.5px;
+  color: var(--r-ink);
+  margin-top: 18px;
+  line-height: 1.55;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.r-warn {
+  border: 1px solid #e8d9b8;
+  border-left: 3px solid #c9992e;
+  background: #fdf8ec;
+  padding: 12px 16px;
+  font-size: 13px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--r-ink);
+  line-height: 1.5;
+}
+
+.r-src {
+  font-size: 11.5px;
+  color: var(--r-slate);
+  border-top: 1px solid var(--r-line-soft);
+  margin-top: 12px;
+  padding-top: 8px;
+  line-height: 1.5;
+}
+
+.r-src a { color: var(--r-blue); }
+
+.r-grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+.research-shell details.r-details {
+  border: 1px solid var(--r-line);
+  border-radius: var(--radius-sm);
+  background: var(--r-panel);
+  padding: 14px 18px;
+}
+
+.research-shell details.r-details summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--r-ink);
+  list-style: none;
+}
+
+.research-shell details.r-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.research-shell details.r-details summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 8px;
+  color: var(--r-red);
+  transition: transform 150ms ease;
+}
+
+.research-shell details.r-details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.r-chip {
+  display: inline-block;
+  border: 1px solid var(--r-line);
+  border-radius: 999px;
+  padding: 1px 9px;
+  font-size: 10px;
+  font-family: 'Geist Mono', monospace !important;
+  color: var(--r-slate);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  vertical-align: 1px;
+}
+
+.r-cta {
+  max-width: 980px;
+  margin: 8px auto 0;
+  border: 1px solid var(--r-line);
+  background: var(--red-soft);
+  border-radius: var(--radius-sm);
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.r-cta .r-cta-title {
+  font-weight: 700;
+  color: var(--r-ink);
+  font-size: 15px;
+}
+
+.r-cta .r-cta-sub {
+  font-size: 13px;
+  color: var(--r-slate);
+}
+
+.r-cta .r-cta-btn {
+  margin-left: auto;
+  background: var(--r-red);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13.5px;
+  padding: 10px 18px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+/* Beat the Model — progress stepper */
+.r-stepper {
+  display: flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--r-line);
+  background: var(--r-panel);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  max-width: 980px;
+  margin: 0 auto 30px;
+}
+
+.r-step {
+  flex: 1 1 200px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 13px 16px;
+  border-right: 1px solid var(--r-line-soft);
+}
+
+.r-step:last-child {
+  border-right: 0;
+}
+
+.r-step .r-dot {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--r-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--r-slate);
+}
+
+.r-step.on .r-dot {
+  background: var(--r-red);
+  border-color: var(--r-red);
+  color: #fff;
+}
+
+.r-step.done .r-dot {
+  background: var(--r-green);
+  border-color: var(--r-green);
+  color: #fff;
+}
+
+.r-step .r-t {
+  font-size: 13px;
+  color: var(--r-slate);
+}
+
+.r-step.on .r-t {
+  color: var(--r-ink);
+  font-weight: 700;
+}
+
+.r-step .r-d {
+  font-size: 10.5px;
+  color: var(--r-slate);
+}
+
+/* Research subnav — restrained underline instead of pill tabs, applied to
+   Gradio's own tab bar wherever a research page is the active surface. */
+.research-shell ~ .tab-nav button.selected,
+.research-shell ~ .tab-nav span.selected {
+  border-bottom-color: var(--red-dark) !important;
+}
+
+@media (max-width: 760px) {
+  .research-shell .r-hero {
+    flex-direction: column;
+  }
+
+  .research-shell .r-headstat {
+    flex-basis: auto;
+    width: 100%;
+  }
+
+  .research-shell .r-grid2 {
+    grid-template-columns: 1fr;
+  }
+
+  .research-shell .r-statrow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .research-shell table.r-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .research-shell .r-stepper {
+    flex-direction: column;
+  }
+
+  .research-shell .r-step {
+    border-right: 0;
+    border-bottom: 1px solid var(--r-line-soft);
+  }
+
+  .research-shell .r-step:last-child {
+    border-bottom: 0;
+  }
+
+  .research-shell .r-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .research-shell .r-cta .r-cta-btn {
+    margin-left: 0;
+  }
+}
 """

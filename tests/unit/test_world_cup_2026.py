@@ -38,13 +38,15 @@ def test_visitor_journeys_use_distinct_names_and_explanations():
 def test_challenge_intro_explains_the_four_step_flow():
     from underdog_lab.ui.components import challenge_intro_html
 
-    html = challenge_intro_html()
+    html = challenge_intro_html(match_count=20)
 
     assert "Beat the Model" in html
-    assert "Choose a past match" in html
+    assert "20 curated historical matches" in html
+    assert "Choose a match" in html
+    assert "Study the context" in html
     assert "Add evidence" in html
-    assert "Commit probabilities" in html
-    assert "Reveal the result" in html
+    assert "Reveal" in html and "compare" in html
+    assert "Same information" in html
 
 
 def test_ui_uses_pills_only_for_compact_status_and_keeps_controls_consistent():

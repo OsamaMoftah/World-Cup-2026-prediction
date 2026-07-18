@@ -13,6 +13,11 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
+from underdog_lab.ui.components import (
+    research_cta_html,
+    research_hero_html,
+    research_section_html,
+)
 from underdog_lab.world_cup.flags import team_label
 from underdog_lab.world_cup.predictions import scored_track_records
 
@@ -93,18 +98,48 @@ def tournament_comparison_html(probabilities: dict, repository) -> str:
     external = load_external_forecasts()
     title_data = external.get("tournament_title")
     group_data = external.get("group_stage")
+    source_count = sum(1 for data in (title_data, group_data) if data)
+    source_names = ", ".join(
+        html.escape(data["label"]) for data in (title_data, group_data) if data
+    )
+    snapshot_dates = sorted(
+        {data.get("captured_at", "") for data in (title_data, group_data) if data}
+    )
 
-    sections = ["""
-    <section class="lab-card">
-      <div class="eyebrow">Compare with other forecasters</div>
-      <h2>How do our numbers stack up against other public predictions?</h2>
-      <p class="context">These are independent, dated snapshots from other
-      analysts and from betting markets. Not live odds, and not an
-      endorsement: they're here so you can see where our model agrees with
-      everyone else, and where it doesn't.</p>
-    </section>
-    """]
+    hero = research_hero_html(
+        title="Compare with other forecasters",
+        dek=(
+            "How our probabilities line up against public projections we "
+            "snapshotted before the tournament. Same teams, different "
+            "models, different dates &mdash; read the caveat before the "
+            "columns."
+        ),
+        meta=(
+            f"{source_count} external source{'s' if source_count != 1 else ''} "
+            f"compared &middot; our column is the live model, updated with "
+            "the current bracket"
+        ),
+        stat_label="Sources compared",
+        stat_value=str(source_count),
+        stat_note=source_names or "No external snapshots available.",
+    )
 
+    warning = ""
+    if len(snapshot_dates) == 1 and snapshot_dates[0]:
+        warning = f"""
+        <div class="r-warn">&#9888; <strong>The snapshots are not
+        contemporaneous.</strong> The external sources below were captured
+        on {html.escape(snapshot_dates[0])}, before the tournament began. Our
+        column updates with the live bracket. Differences partly reflect
+        information, not only modelling &mdash; that is why we show both,
+        and date every column.</div>
+        """
+
+    sections = [hero]
+    if warning:
+        sections.append(f'<section class="r-block">{warning}</section>')
+
+    section_number = 1
     if title_data:
         rows = []
         for team, ext_probability in sorted(
@@ -113,23 +148,35 @@ def tournament_comparison_html(probabilities: dict, repository) -> str:
             reverse=True,
         ):
             our_probability = probabilities.get(team, {}).get("champion", 0.0)
+            bar_pct = min(100, round(our_probability * 100))
             rows.append(
                 f"<tr><td>{team_label(team)}</td>"
-                f"<td>{our_probability:.1%}</td>"
-                f"<td>{ext_probability:.1%}</td></tr>"
+                f"<td class='r-num'>{ext_probability:.1%}</td>"
+                f"<td class='r-num'>{our_probability:.1%}</td>"
+                f"<td><div class='r-bar'><i style='width:{bar_pct}%'></i></div></td></tr>"
             )
-        sections.append(f"""
-        <section class="lab-card">
-          <h3>Who's favourite to win it all?</h3>
-          <p class="context">{html.escape(title_data.get('note', ''))}</p>
-          <div class="table-scroll"><table>
-            <thead><tr><th>Team</th><th>Our model</th><th>{html.escape(title_data['label'])}</th></tr></thead>
-            <tbody>{''.join(rows)}</tbody>
-          </table></div>
-          <p class="small">Snapshot captured {html.escape(title_data.get('captured_at', ''))}.
-          Source: <a href="{html.escape(title_data['url'])}" target="_blank" rel="noopener">{html.escape(title_data['source'])}</a>.</p>
-        </section>
-        """)
+        body = f"""
+        <table class="r-table">
+          <thead><tr><th>Team</th>
+          <th class="r-num">{html.escape(title_data['label'])}<br>
+          <span style="font-weight:400">{html.escape(title_data.get('captured_at', ''))}</span></th>
+          <th class="r-num">Our model<br><span style="font-weight:400">live today</span></th>
+          <th>Live probability</th></tr></thead>
+          <tbody>{''.join(rows)}</tbody>
+        </table>
+        <div class="r-src">{html.escape(title_data.get('note', ''))} Source:
+        <a href="{html.escape(title_data['url'])}" target="_blank" rel="noopener">{html.escape(title_data['source'])}</a>,
+        captured {html.escape(title_data.get('captured_at', ''))}.</div>
+        """
+        sections.append(
+            research_section_html(
+                section_number,
+                "Who lifts the trophy?",
+                f"{html.escape(title_data['label'])}'s pre-tournament title probabilities vs. our live model.",
+                body,
+            )
+        )
+        section_number += 1
 
     if group_data:
         rows = []
@@ -142,27 +189,42 @@ def tournament_comparison_html(probabilities: dict, repository) -> str:
             rows.append(
                 f"<tr><td>{team_label(team)}</td>"
                 f"<td>{teams_by_group.get(team, '?')}</td>"
-                f"<td>{ours.get('group_winner', 0.0):.1%}</td>"
-                f"<td>{ext['group_win']:.1%}</td>"
-                f"<td>{ours.get('advance', 0.0):.1%}</td>"
-                f"<td>{ext['qualify']:.1%}</td></tr>"
+                f"<td class='r-num'>{ext['group_win']:.1%}</td>"
+                f"<td class='r-num'>{ours.get('group_winner', 0.0):.1%}</td>"
+                f"<td class='r-num'>{ext['qualify']:.1%}</td>"
+                f"<td class='r-num'>{ours.get('advance', 0.0):.1%}</td></tr>"
             )
-        sections.append(f"""
-        <section class="lab-card">
-          <h3>Group-stage chances</h3>
-          <p class="context">{html.escape(group_data.get('note', ''))}</p>
-          <div class="table-scroll"><table>
-            <thead><tr><th>Team</th><th>Group</th>
-            <th>Our group-win %</th><th>{html.escape(group_data['label'])} group-win %</th>
-            <th>Our advance %</th><th>{html.escape(group_data['label'])} qualify %</th></tr></thead>
-            <tbody>{''.join(rows)}</tbody>
-          </table></div>
-          <p class="small">Snapshot captured {html.escape(group_data.get('captured_at', ''))}.
-          Source: <a href="{html.escape(group_data['url'])}" target="_blank" rel="noopener">{html.escape(group_data['source'])}</a>.</p>
-        </section>
-        """)
+        body = f"""
+        <div class="table-scroll"><table class="r-table">
+          <thead><tr><th>Team</th><th>Group</th>
+          <th class="r-num">{html.escape(group_data['label'])}<br><span style="font-weight:400">group win</span></th>
+          <th class="r-num">Our model<br><span style="font-weight:400">group win</span></th>
+          <th class="r-num">{html.escape(group_data['label'])}<br><span style="font-weight:400">qualify</span></th>
+          <th class="r-num">Our model<br><span style="font-weight:400">advance</span></th></tr></thead>
+          <tbody>{''.join(rows)}</tbody>
+        </table></div>
+        <div class="r-src">{html.escape(group_data.get('note', ''))} Source:
+        <a href="{html.escape(group_data['url'])}" target="_blank" rel="noopener">{html.escape(group_data['source'])}</a>,
+        captured {html.escape(group_data.get('captured_at', ''))}.</div>
+        """
+        sections.append(
+            research_section_html(
+                section_number,
+                "Group-stage projections",
+                f"{html.escape(group_data['label'])} published qualification odds for all 48 teams before the tournament.",
+                body,
+            )
+        )
+        section_number += 1
 
-    return "".join(sections)
+    sections.append(
+        research_cta_html(
+            "Numbers are easy to compare, hard to earn.",
+            "See how every one of our forecasts was sealed and scored.",
+            "Read the Evidence",
+        )
+    )
+    return '<div class="research-shell">' + "".join(sections) + "</div>"
 
 
 def tournament_benchmark_html(repository) -> str:

@@ -24,6 +24,9 @@ from underdog_lab.ui.components import (
     forecast_html,
     hero_html,
     match_html,
+    research_cta_html,
+    research_section_html,
+    research_stat_row_html,
     reveal_html,
     visitor_tab_copy,
 )
@@ -243,100 +246,314 @@ def reveal(
     return output
 
 
+def _legacy_track_record_section(title: str, description: str, summary: dict) -> str:
+    """Full row-level detail table for one scored group (used inside a
+    collapsible <details> block so the raw data stays available without
+    competing with the editorial summary above it)."""
+    rows = "".join(
+        "<tr>"
+        f"<td>{row['fixture_id']}</td><td>{team_label(row['home'])}</td>"
+        f"<td>{row['score']}</td><td>{team_label(row['away'])}</td>"
+        f"<td class='r-num'>{row['p_home']:.1%}</td><td class='r-num'>{row['p_draw']:.1%}</td>"
+        f"<td class='r-num'>{row['p_away']:.1%}</td><td class='r-num'>{row['log_loss']:.3f}</td>"
+        f"<td class='r-num'>{row['brier']:.3f}</td><td class='r-num'>{row['rps']:.3f}</td></tr>"
+        for row in summary["rows"]
+    )
+    if not rows:
+        rows = "<tr><td colspan='10'>No matches in this group yet.</td></tr>"
+    metrics = (
+        (
+            f"{summary['accuracy']:.1%}",
+            f"{summary['mean_log_loss']:.3f}",
+            f"{summary['mean_brier']:.3f}",
+            f"{summary['mean_rps']:.3f}",
+            f"{summary['log_loss_skill_vs_uniform']:+.1%}",
+        )
+        if summary["n"]
+        else ("-", "-", "-", "-", "-")
+    )
+    sample_note = (
+        "Fewer than 30 matches so far: a useful early signal, but too "
+        "small to call a stable accuracy rate yet."
+        if summary["n"] < 30
+        else "Large enough for a descriptive comparison, while still "
+        "subject to tournament-specific sample uncertainty."
+    )
+    skill_note = (
+        "Positive skill means lower (better) log loss than equal 1/3 odds; "
+        "negative skill means worse."
+    )
+    return f"""
+    <details class="r-details">
+      <summary><strong>{html.escape(title)}</strong> &mdash; {html.escape(description)}</summary>
+      <div class="r-statrow" style="margin-top:12px">
+        <div><div class="r-k">Matches</div><div class="r-v">{summary['n']}</div></div>
+        <div><div class="r-k">Top-pick accuracy</div><div class="r-v">{metrics[0]}</div></div>
+        <div><div class="r-k">Mean log loss</div><div class="r-v">{metrics[1]}</div></div>
+        <div><div class="r-k">Mean Brier / RPS</div><div class="r-v">{metrics[2]} / {metrics[3]}</div></div>
+        <div><div class="r-k">Skill vs equal odds</div><div class="r-v">{metrics[4]}</div></div>
+        <div><div class="r-k">Equal-odds baseline</div><div class="r-v">{summary['uniform_log_loss']:.3f}</div></div>
+      </div>
+      <p class="r-note">{skill_note} {sample_note}</p>
+      <div class="table-scroll"><table class="r-table">
+        <thead><tr><th>ID</th><th>Home</th><th>Score</th><th>Away</th>
+        <th class="r-num">1</th><th class="r-num">X</th><th class="r-num">2</th>
+        <th class="r-num">Log loss</th><th class="r-num">Brier</th><th class="r-num">RPS</th></tr></thead>
+        <tbody>{rows}</tbody>
+      </table></div>
+    </details>
+    """
+
+
 def track_record_html(repository) -> str:
     records = scored_track_records(
         repository.tournament_fixtures, repository.team_by_name
     )
-
-    def section(title: str, description: str, summary: dict) -> str:
-        rows = "".join(
-            "<tr>"
-            f"<td>{row['fixture_id']}</td><td>{team_label(row['home'])}</td>"
-            f"<td>{row['score']}</td><td>{team_label(row['away'])}</td>"
-            f"<td>{row['p_home']:.1%}</td><td>{row['p_draw']:.1%}</td>"
-            f"<td>{row['p_away']:.1%}</td><td>{row['log_loss']:.3f}</td>"
-            f"<td>{row['brier']:.3f}</td><td>{row['rps']:.3f}</td></tr>"
-            for row in summary["rows"]
-        )
-        if not rows:
-            rows = "<tr><td colspan='10'>No matches in this group yet.</td></tr>"
-        metrics = (
-            (
-                f"{summary['accuracy']:.1%}",
-                f"{summary['mean_log_loss']:.3f}",
-                f"{summary['mean_brier']:.3f}",
-                f"{summary['mean_rps']:.3f}",
-                f"{summary['log_loss_skill_vs_uniform']:+.1%}",
-            )
-            if summary["n"]
-            else ("-", "-", "-", "-", "-")
-        )
-        sample_note = (
-            "Fewer than 30 matches so far: a useful early signal, but too "
-            "small to call a stable accuracy rate yet."
-            if summary["n"] < 30
-            else "Large enough for a descriptive comparison, while still "
-            "subject to tournament-specific sample uncertainty."
-        )
-        skill_note = (
-            "Positive skill means lower (better) log loss than equal 1/3 odds; "
-            "negative skill means worse."
-        )
-        return f"""
-        <section class="lab-card">
-          <div class="eyebrow">Track record</div>
-          <h2>{title}</h2>
-          <p class="context">{description}</p>
-          <div class="score-grid">
-            <div class="score-box"><span>Matches</span><strong>{summary['n']}</strong></div>
-            <div class="score-box"><span>Top-pick accuracy</span><strong>{metrics[0]}</strong></div>
-            <div class="score-box"><span>Mean log loss</span><strong>{metrics[1]}</strong></div>
-            <div class="score-box"><span>Mean Brier</span><strong>{metrics[2]}</strong></div>
-            <div class="score-box"><span>Mean RPS</span><strong>{metrics[3]}</strong></div>
-            <div class="score-box"><span>Log-loss skill vs equal odds</span><strong>{metrics[4]}</strong></div>
-            <div class="score-box"><span>"Just guess equally" baseline</span><strong>{summary['uniform_log_loss']:.3f}</strong></div>
-          </div>
-          <p class="small">{skill_note} {sample_note}</p>
-          <div class="table-scroll"><table>
-            <thead><tr><th>ID</th><th>Home</th><th>Score</th><th>Away</th>
-            <th>1</th><th>X</th><th>2</th><th>LogLoss</th><th>Brier</th><th>RPS</th></tr></thead>
-            <tbody>{rows}</tbody>
-          </table></div>
-        </section>
-        """
+    summary = records["prospective"]
+    coverage = records["coverage"]
 
     intro = evidence_summary_html(records)
 
-    horizon_titles = {
-        "final": "Predictions locked within 2 hours of kickoff",
-        "6h": "Predictions locked 2-6 hours before kickoff",
-        "24h": "Predictions locked 6-24 hours before kickoff",
-        "long_range": "Predictions locked more than a day before kickoff",
-    }
-    prospective_sections = "".join(
-        section(
-            horizon_titles.get(horizon, f"Predictions made {horizon}"),
-            "Locked in before kickoff and compared to the final score.",
-            summary,
+    # Section 1 — the live, prospective track record: every pre-registered
+    # forecast, scored once its match completed.
+    rows_html = "".join(
+        f"<tr><td>{row['fixture_id']}</td>"
+        f"<td>{team_label(row['home'])} {row['score']} {team_label(row['away'])}</td>"
+        f"<td class='r-num'>{row['p_home']:.1%}</td><td class='r-num'>{row['p_draw']:.1%}</td>"
+        f"<td class='r-num'>{row['p_away']:.1%}</td><td class='r-num'>{row['log_loss']:.3f}</td>"
+        f"<td class='r-num'>{row['brier']:.3f}</td><td class='r-num'>{row['rps']:.3f}</td></tr>"
+        for row in summary["rows"]
+    ) or "<tr><td colspan='8'>No matches scored yet.</td></tr>"
+    exclusion_note = (
+        f"{coverage['excluded']} completed fixtures are excluded because no "
+        f"verified pre-kickoff artifact exists for them "
+        f"({coverage['exclusion_reason'].replace('_', ' ')}) &mdash; they are "
+        f"listed, not hidden. Coverage: "
+        f"{coverage['rate']:.1%}." if coverage['rate'] is not None else ""
+    )
+    section1_body = (
+        research_stat_row_html(
+            [
+                ("Matches scored", str(summary["n"]), f"of {coverage['completed']} completed"),
+                (
+                    "Top-pick accuracy",
+                    f"{summary['accuracy']:.1%}" if summary["n"] else "&mdash;",
+                    "vs 33.3% random",
+                ),
+                (
+                    "Mean log loss",
+                    f"{summary['mean_log_loss']:.3f}" if summary["n"] else "&mdash;",
+                    f"uniform baseline {summary['uniform_log_loss']:.3f} &middot; lower is better",
+                ),
+                (
+                    "Mean Brier / RPS",
+                    (
+                        f"{summary['mean_brier']:.3f} / {summary['mean_rps']:.3f}"
+                        if summary["n"]
+                        else "&mdash;"
+                    ),
+                    "lower is better",
+                ),
+            ]
         )
-        for horizon, summary in records["prospective_by_horizon"].items()
-        if summary["n"]
+        + f'<p class="r-note">{exclusion_note}</p>'
+        + f"""<div class="table-scroll"><table class="r-table">
+          <thead><tr><th>ID</th><th>Match</th><th class="r-num">1</th><th class="r-num">X</th>
+          <th class="r-num">2</th><th class="r-num">Log loss</th><th class="r-num">Brier</th>
+          <th class="r-num">RPS</th></tr></thead>
+          <tbody>{rows_html}</tbody>
+        </table></div>"""
+    )
+    section1 = research_section_html(
+        1,
+        "The live track record",
+        "Forecasts locked before kickoff during World Cup 2026, scored on the final result.",
+        section1_body,
     )
 
-    aggregate = section(
-        "All verified pre-kickoff predictions",
-        "The honest headline score across all forecast horizons. Each match "
-        "is counted once using its latest eligible artifact before kickoff.",
-        records["prospective"],
+    # Section 2 — same record, split by how far ahead of kickoff each
+    # forecast was locked. Row-level detail lives in Section 1 already, so
+    # this stays a compact comparison instead of repeating every match.
+    horizon_titles = {
+        "final": "Within 2 hours of kickoff",
+        "6h": "2–6 hours before kickoff",
+        "24h": "6–24 hours before kickoff",
+        "long_range": "More than a day before kickoff",
+    }
+    horizon_order = ("long_range", "24h", "6h", "final")
+    horizon_rows = []
+    for horizon in horizon_order:
+        horizon_summary = records["prospective_by_horizon"].get(horizon)
+        if not horizon_summary or not horizon_summary["n"]:
+            continue
+        widest = max(
+            (
+                s["mean_log_loss"]
+                for s in records["prospective_by_horizon"].values()
+                if s["n"]
+            ),
+            default=1.0,
+        )
+        bar_pct = min(100, round(100 * horizon_summary["mean_log_loss"] / widest)) if widest else 0
+        bar_class = "r-gray" if horizon_summary["n"] < 10 else ""
+        horizon_rows.append(
+            f"<tr><td>{html.escape(horizon_titles.get(horizon, horizon))}</td>"
+            f"<td class='r-num'>{horizon_summary['n']}</td>"
+            f"<td class='r-num'>{horizon_summary['accuracy']:.1%}</td>"
+            f"<td class='r-num'>{horizon_summary['mean_log_loss']:.3f}</td>"
+            f"<td><div class='r-bar {bar_class}'><i style='width:{bar_pct}%'></i></div></td></tr>"
+        )
+    section2_body = f"""
+    <table class="r-table">
+      <thead><tr><th>Locked</th><th class="r-num">Matches</th><th class="r-num">Accuracy</th>
+      <th class="r-num">Mean log loss</th><th>vs. uniform {summary['uniform_log_loss']:.3f}</th></tr></thead>
+      <tbody>{''.join(horizon_rows) or '<tr><td colspan="5">No horizon data yet.</td></tr>'}</tbody>
+    </table>
+    <p class="r-note">Any bucket with fewer than 30 matches is a useful early
+    signal, not a stable rate &mdash; several horizons here are tiny samples,
+    shown for completeness rather than as evidence either way.</p>
+    """
+    section2 = research_section_html(
+        2,
+        "How far ahead were the calls made?",
+        "The same 65 forecasts, split by how long before kickoff each one was locked in.",
+        section2_body,
     )
 
-    return intro + aggregate + prospective_sections + section(
+    # Section 3 — the walk-forward backtest run before the model shipped.
+    backtest_path = Path("models/backtest_report.json")
+    section3 = ""
+    if backtest_path.exists():
+        backtest = json.loads(backtest_path.read_text(encoding="utf-8"))
+        fitted = backtest["overall_mean_scores"]["fitted"]
+        current = backtest["overall_mean_scores"]["current"]
+        uniform = backtest["overall_mean_scores"]["uniform"]
+        test_years = backtest.get("test_years") or []
+        year_range = f"{min(test_years)}–{max(test_years)}" if test_years else ""
+        widest3 = max(fitted["log_loss"], current["log_loss"], uniform["log_loss"]) or 1.0
+        section3_body = f"""
+        <p class="r-sub" style="margin-top:-8px">The model was fitted on real
+        historical matches and tested on {backtest['total_test_matches']:,}
+        held-out matches across {year_range} folds it had never seen.</p>
+        <table class="r-table">
+          <thead><tr><th>Model</th><th class="r-num">Log loss</th>
+          <th class="r-num">Brier</th><th class="r-num">RPS</th>
+          <th>Log loss (lower is better)</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Shipped model</strong></td>
+            <td class="r-num">{fitted['log_loss']:.3f}</td>
+            <td class="r-num">{fitted['brier']:.3f}</td>
+            <td class="r-num">{fitted['rps']:.3f}</td>
+            <td><div class="r-bar"><i style="width:{100 * fitted['log_loss'] / widest3:.0f}%"></i></div></td></tr>
+            <tr><td>Previous hand-set model</td>
+            <td class="r-num">{current['log_loss']:.3f}</td>
+            <td class="r-num">{current['brier']:.3f}</td>
+            <td class="r-num">{current['rps']:.3f}</td>
+            <td><div class="r-bar r-gray"><i style="width:{100 * current['log_loss'] / widest3:.0f}%"></i></div></td></tr>
+            <tr><td>Uniform &#8531; / &#8531; / &#8531;</td>
+            <td class="r-num">{uniform['log_loss']:.3f}</td>
+            <td class="r-num">{uniform['brier']:.3f}</td>
+            <td class="r-num">{uniform['rps']:.3f}</td>
+            <td><div class="r-bar r-gray"><i style="width:100%"></i></div></td></tr>
+          </tbody>
+        </table>
+        <div class="r-src">Source: models/backtest_report.json &middot; every
+        fold predicts matches after its training window.</div>
+        """
+        section3 = research_section_html(
+            3,
+            "Before it went live: the walk-forward backtest",
+            "Tested against real results before a single 2026 forecast was made.",
+            section3_body,
+        )
+
+    # Section 4 — biggest misses (real rows from Section 1) and the
+    # calibration adjustment, side by side.
+    worst = sorted(summary["rows"], key=lambda row: -row["log_loss"])[:5]
+    miss_row_html = []
+    for row in worst:
+        outcome_probability = row[f"p_{row['outcome']}"]
+        miss_row_html.append(
+            f"<tr><td>{team_label(row['home'])} &ndash; {team_label(row['away'])}</td>"
+            f"<td>{row['score']}</td>"
+            f"<td class='r-num'>{outcome_probability:.1%}</td>"
+            f"<td class='r-num'>{row['log_loss']:.2f}</td></tr>"
+        )
+    misses_rows = "".join(miss_row_html) or "<tr><td colspan='4'>No scored matches yet.</td></tr>"
+    calibration_path = Path("models/recalibration_evaluation.json")
+    calibration_body = ""
+    if calibration_path.exists():
+        calibration = json.loads(calibration_path.read_text(encoding="utf-8"))
+        temperature = calibration["fitted_temperature"]
+        selection_years = calibration.get("selection_years") or []
+        confirmation_year = calibration.get("confirmation_year")
+        calibration_body = f"""
+        <div class="r-statrow" style="grid-template-columns:1fr 1fr">
+          <div><div class="r-k">Temperature</div><div class="r-v">T = {temperature:.3f}</div>
+          <div class="r-s">T &lt; 1 sharpens the raw forecasts</div></div>
+          <div><div class="r-k">Validation</div><div class="r-v">2-stage</div>
+          <div class="r-s">selection folds {min(selection_years) if selection_years else ''}
+          &ndash;{max(selection_years) if selection_years else ''}, confirmed on
+          held-out {confirmation_year}</div></div>
+        </div>
+        <div class="r-callout"><strong>Why no calibration curve?</strong> A
+        reliability plot needs more scored matches per probability bucket
+        than one live tournament provides. Rather than draw a curve from
+        thin bins, we report the validated temperature and will publish the
+        curve once the sample supports it.</div>
+        """
+    section4_body = f"""
+    <div class="r-grid2">
+      <div>
+        <table class="r-table">
+          <thead><tr><th>Match</th><th>Result</th><th class="r-num">P(outcome)</th>
+          <th class="r-num">Log loss</th></tr></thead>
+          <tbody>{misses_rows}</tbody>
+        </table>
+        <p class="r-note">Pattern: heavy favorites held to low-scoring draws.
+        The model prices these low, not at zero &mdash; that is how
+        probabilistic forecasts are supposed to fail.</p>
+      </div>
+      <div>{calibration_body}</div>
+    </div>
+    """
+    section4 = research_section_html(
+        4,
+        "Where the model missed, and how it's calibrated",
+        "The five worst live misses by log loss, and what we adjusted after fitting.",
+        section4_body,
+    )
+
+    retrospective_details = _legacy_track_record_section(
         "Retrospective diagnostic — not prospective evidence",
-        "This re-runs the current model over every match played so far. "
-        "It's a useful diagnostic, but because it uses today's corrected "
-        "ratings, treat it as 'how good is the current model', not as a "
-        "pre-match prediction.",
+        "Re-runs the current model over every match played so far, using "
+        "today's ratings. Useful for 'how good is the current model', not "
+        "as a record of pre-match predictions.",
         records["retrospective"],
+    )
+    section5 = research_section_html(
+        5,
+        "Retrospective diagnostic",
+        "A different question from the track record above: how would today's model score if it replayed every match so far?",
+        retrospective_details,
+    )
+
+    cta = research_cta_html(
+        "Think you can do better?",
+        "Predict historical matches with exactly the information the model had.",
+        "Beat the Model",
+    )
+
+    return (
+        '<div class="research-shell">'
+        + intro
+        + section1
+        + section2
+        + section3
+        + section4
+        + section5
+        + cta
+        + "</div>"
     )
 
 
@@ -746,108 +963,109 @@ with gr.Blocks(title="World Cup 2026 Forecaster") as demo:
             gr.HTML(awards_html(world_cup_repository, world_cup_probabilities))
 
         with gr.Tab(VISITOR_COPY["challenge_title"]):
-            gr.HTML(challenge_intro_html())
-            with gr.Column(elem_classes="challenge-panel"):
-                match_selector = gr.Dropdown(
-                    choices=labels,
-                    value=labels[0],
-                    label="Choose a past match",
-                    info="The final score is hidden until you commit your forecast.",
-                )
-                match_card = gr.HTML(match_html(initial_match))
-                baseline_card = gr.HTML(
-                    forecast_html(initial_baseline, initial_match, "Baseline forecast")
-                )
-
-                scenario = gr.Textbox(
-                    label="Add evidence before kickoff",
-                    placeholder=(
-                        "Example: Argentina's first-choice striker is confirmed out."
-                    ),
-                    lines=3,
-                )
-                with gr.Row():
-                    analyze_button = gr.Button(
-                        "Apply evidence", variant="primary", elem_classes="primary-button"
+            with gr.Column(elem_classes="research-shell"):
+                gr.HTML(challenge_intro_html(match_count=len(labels)))
+                with gr.Column(elem_classes="challenge-panel"):
+                    match_selector = gr.Dropdown(
+                        choices=labels,
+                        value=labels[0],
+                        label="Choose a past match",
+                        info="The final score is hidden until you commit your forecast.",
                     )
-                    clear_button = gr.ClearButton(
-                        [scenario], value="Clear", elem_classes="secondary-button"
+                    match_card = gr.HTML(match_html(initial_match))
+                    baseline_card = gr.HTML(
+                        forecast_html(initial_baseline, initial_match, "Baseline forecast")
                     )
 
-                factors_card = gr.HTML(
-                    factors_html(
-                        ScenarioExtraction(),
-                        apply_extraction(initial_match, ScenarioExtraction()),
+                    scenario = gr.Textbox(
+                        label="Add evidence before kickoff",
+                        placeholder=(
+                            "Example: Argentina's first-choice striker is confirmed out."
+                        ),
+                        lines=3,
                     )
-                )
-                adjusted_card = gr.HTML(
-                    forecast_html(
-                        initial_baseline, initial_match, "Scenario forecast"
-                    )
-                )
+                    with gr.Row():
+                        analyze_button = gr.Button(
+                            "Apply evidence", variant="primary", elem_classes="primary-button"
+                        )
+                        clear_button = gr.ClearButton(
+                            [scenario], value="Clear", elem_classes="secondary-button"
+                        )
 
-                gr.Markdown("### Commit probabilities")
-                with gr.Row():
-                    user_home = gr.Slider(
-                        0, 100, value=45, step=1, label="Home win %"
+                    factors_card = gr.HTML(
+                        factors_html(
+                            ScenarioExtraction(),
+                            apply_extraction(initial_match, ScenarioExtraction()),
+                        )
                     )
-                    user_draw = gr.Slider(
-                        0, 100, value=25, step=1, label="Draw %"
+                    adjusted_card = gr.HTML(
+                        forecast_html(
+                            initial_baseline, initial_match, "Scenario forecast"
+                        )
                     )
-                    user_away = gr.HTML(derived_away_html(45, 25))
-                reveal_button = gr.Button(
-                    "Commit forecast and reveal result",
-                    variant="primary",
-                    elem_classes="primary-button",
-                )
-                reveal_card = gr.HTML()
 
-                match_selector.change(
-                    select_match,
-                    inputs=match_selector,
-                    outputs=[
-                        match_id_state,
-                        baseline_state,
-                        adjusted_state,
-                        match_card,
-                        baseline_card,
-                        factors_card,
-                        adjusted_card,
-                        reveal_card,
-                        user_away,
-                    ],
-                )
-                analyze_button.click(
-                    run_scenario,
-                    inputs=[match_selector, scenario],
-                    outputs=[adjusted_state, factors_card, adjusted_card, reveal_card],
-                )
-                scenario.submit(
-                    run_scenario,
-                    inputs=[match_selector, scenario],
-                    outputs=[adjusted_state, factors_card, adjusted_card, reveal_card],
-                )
-                user_home.change(
-                    update_user_forecast,
-                    inputs=[user_home, user_draw],
-                    outputs=user_away,
-                )
-                user_draw.change(
-                    update_user_forecast,
-                    inputs=[user_home, user_draw],
-                    outputs=user_away,
-                )
-                reveal_button.click(
-                    reveal,
-                    inputs=[
-                        match_selector,
-                        baseline_state,
-                        adjusted_state,
-                        user_home,
-                        user_draw,
-                    ],
-                    outputs=reveal_card,
-                )
+                    gr.Markdown("### Commit probabilities")
+                    with gr.Row():
+                        user_home = gr.Slider(
+                            0, 100, value=45, step=1, label="Home win %"
+                        )
+                        user_draw = gr.Slider(
+                            0, 100, value=25, step=1, label="Draw %"
+                        )
+                        user_away = gr.HTML(derived_away_html(45, 25))
+                    reveal_button = gr.Button(
+                        "Commit forecast and reveal result",
+                        variant="primary",
+                        elem_classes="primary-button",
+                    )
+                    reveal_card = gr.HTML()
+
+                    match_selector.change(
+                        select_match,
+                        inputs=match_selector,
+                        outputs=[
+                            match_id_state,
+                            baseline_state,
+                            adjusted_state,
+                            match_card,
+                            baseline_card,
+                            factors_card,
+                            adjusted_card,
+                            reveal_card,
+                            user_away,
+                        ],
+                    )
+                    analyze_button.click(
+                        run_scenario,
+                        inputs=[match_selector, scenario],
+                        outputs=[adjusted_state, factors_card, adjusted_card, reveal_card],
+                    )
+                    scenario.submit(
+                        run_scenario,
+                        inputs=[match_selector, scenario],
+                        outputs=[adjusted_state, factors_card, adjusted_card, reveal_card],
+                    )
+                    user_home.change(
+                        update_user_forecast,
+                        inputs=[user_home, user_draw],
+                        outputs=user_away,
+                    )
+                    user_draw.change(
+                        update_user_forecast,
+                        inputs=[user_home, user_draw],
+                        outputs=user_away,
+                    )
+                    reveal_button.click(
+                        reveal,
+                        inputs=[
+                            match_selector,
+                            baseline_state,
+                            adjusted_state,
+                            user_home,
+                            user_draw,
+                        ],
+                        outputs=reveal_card,
+                    )
 
         with gr.Tab(VISITOR_COPY["evidence_title"]):
             gr.HTML(track_record_html(world_cup_repository))

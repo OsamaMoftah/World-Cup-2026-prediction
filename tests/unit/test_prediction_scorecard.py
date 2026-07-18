@@ -16,14 +16,20 @@ def test_evidence_summary_explains_freezing_and_proper_scores():
                 "scored": 65,
                 "rate": 65 / 72,
                 "excluded": 7,
-            }
+                "exclusion_reason": "no_verified_pre_kickoff_artifact",
+            },
+            "prospective": {
+                "n": 65,
+                "log_loss_skill_vs_uniform": 0.169,
+            },
         }
     )
 
-    assert "frozen before kickoff" in html
-    assert "65 / 72" in html
-    assert "Log loss, Brier and RPS" in html
-    assert "Excluded forecasts stay visible" in html
+    assert "pre-registered forecast scored against a real result" in html
+    assert "65 of 72" in html
+    assert "sealed with SHA-256 manifests" in html
+    assert "rejected automatically, not silently backfilled" in html
+    assert "+16.9%" in html
 
 
 def test_track_record_labels_retrospective_replay_as_diagnostic():

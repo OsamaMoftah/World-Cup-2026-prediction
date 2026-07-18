@@ -9,6 +9,76 @@ from underdog_lab.world_cup.flags import team_label
 from underdog_lab.world_cup.forecasting import top_scorelines
 
 
+def research_hero_html(
+    *,
+    title: str,
+    dek: str,
+    meta: str,
+    stat_label: str,
+    stat_value: str,
+    stat_note: str,
+    stat_tone: str = "",
+) -> str:
+    """Editorial hero for a Research tab: headline, dek, meta line, and one
+    headline statistic pulled from real data."""
+    return f"""
+    <section class="r-block">
+      <div class="r-hero">
+        <div class="r-hero-main">
+          <h1>{html.escape(title)}</h1>
+          <p class="r-dek">{dek}</p>
+          <p class="r-meta">{meta}</p>
+        </div>
+        <div class="r-headstat">
+          <div class="r-k">{html.escape(stat_label)}</div>
+          <div class="r-v {stat_tone}">{stat_value}</div>
+          <div class="r-s">{stat_note}</div>
+        </div>
+      </div>
+    </section>
+    """
+
+
+def research_section_html(number: int, title: str, subtitle: str, body: str) -> str:
+    """A numbered editorial section: '1. Title' + a short subtitle + body HTML."""
+    return f"""
+    <section class="r-block">
+      <span class="r-secno">{number}</span>
+      <h2>{html.escape(title)}</h2>
+      <p class="r-sub">{subtitle}</p>
+      {body}
+    </section>
+    """
+
+
+def research_stat_row_html(
+    items: list[tuple[str, str, str]] | list[tuple[str, str, str, str]],
+) -> str:
+    """A row of compact stat boxes: (label, value, subtext[, tone-class])."""
+    cells = []
+    for item in items:
+        label, value, sub = item[0], item[1], item[2]
+        tone = item[3] if len(item) > 3 else ""
+        cells.append(
+            f"""<div><div class="r-k">{html.escape(label)}</div>
+            <div class="r-v {tone}">{value}</div>
+            <div class="r-s">{sub}</div></div>"""
+        )
+    return f'<div class="r-statrow">{"".join(cells)}</div>'
+
+
+def research_cta_html(title: str, subtitle: str, label: str) -> str:
+    return f"""
+    <div class="r-cta">
+      <div>
+        <div class="r-cta-title">{html.escape(title)}</div>
+        <div class="r-cta-sub">{html.escape(subtitle)}</div>
+      </div>
+      <div class="r-cta-btn">{html.escape(label)} &rarr;</div>
+    </div>
+    """
+
+
 def visitor_tab_copy() -> dict[str, str]:
     return {
         "challenge_title": "Beat the Model",
@@ -25,40 +95,68 @@ def visitor_tab_copy() -> dict[str, str]:
     }
 
 
-def challenge_intro_html() -> str:
-    return """
-    <section class="journey-intro challenge-intro">
-      <div class="eyebrow">20 curated historical matches</div>
-      <h2>Beat the Model</h2>
-      <p class="context">Test whether new information should change a football
-      forecast. This is a learning experiment, not a live betting tool.</p>
-      <ol class="journey-steps">
-        <li><strong>Choose a past match</strong><span>The result stays hidden.</span></li>
-        <li><strong>Add evidence</strong><span>Describe an injury, suspension or supported factor.</span></li>
-        <li><strong>Commit probabilities</strong><span>Home, draw and away total 100%.</span></li>
-        <li><strong>Reveal the result</strong><span>Compare the baseline, scenario and your forecast.</span></li>
-      </ol>
-    </section>
+def challenge_intro_html(match_count: int = 20) -> str:
+    hero = research_hero_html(
+        title="Beat the Model",
+        dek=(
+            "Forecast a historical match using only what was knowable before "
+            "kickoff, then see whether new evidence should have changed the "
+            "call &mdash; and how your probabilities score against the model's."
+        ),
+        meta=(
+            f"{match_count} curated historical matches &middot; results stay "
+            "hidden until you commit &middot; a learning experiment, not a "
+            "betting tool or a leaderboard"
+        ),
+        stat_label="The honest rule",
+        stat_value="Same information",
+        stat_note=(
+            "You see exactly what the model saw at kickoff. No hindsight, "
+            "no final score, no evidence the model didn't have."
+        ),
+    )
+    stepper = """
+    <div class="r-stepper">
+      <div class="r-step on"><div class="r-dot">1</div><div>
+        <div class="r-t">Choose a match</div><div class="r-d">pick a past fixture</div></div></div>
+      <div class="r-step"><div class="r-dot">2</div><div>
+        <div class="r-t">Study the context</div><div class="r-d">pre-kickoff information</div></div></div>
+      <div class="r-step"><div class="r-dot">3</div><div>
+        <div class="r-t">Add evidence &amp; predict</div><div class="r-d">optional factor, then win/draw/win</div></div></div>
+      <div class="r-step"><div class="r-dot">4</div><div>
+        <div class="r-t">Reveal &amp; compare</div><div class="r-d">you vs. baseline vs. scenario</div></div></div>
+    </div>
     """
+    return hero + stepper
 
 
 def evidence_summary_html(records: dict) -> str:
     coverage = records["coverage"]
-    return f"""
-    <section class="journey-intro evidence-intro">
-      <div class="eyebrow">Verified World Cup evidence</div>
-      <h2>What did the model say before kickoff?</h2>
-      <p class="context">Every World Cup forecast below was frozen before kickoff
-      and scored against the result. Log loss, Brier and RPS are the primary
-      evidence; top-pick accuracy is a familiar secondary summary.</p>
-      <div class="evidence-coverage">
-        <strong>{coverage['scored']} / {coverage['completed']}</strong>
-        <span>completed matches have eligible forecasts</span>
-      </div>
-      <p class="small">Excluded forecasts stay visible and are never silently
-      backfilled.</p>
-    </section>
-    """
+    summary = records["prospective"]
+    skill = summary["log_loss_skill_vs_uniform"]
+    stat_value = f"{skill:+.1%}" if skill is not None else "&mdash;"
+    stat_tone = "good" if (skill or 0) > 0 else ("bad" if skill else "")
+    return research_hero_html(
+        title="Evidence",
+        dek=(
+            "Every number below is a pre-registered forecast scored against a "
+            "real result, or a walk-forward backtest run before the model "
+            "shipped. Nothing here is graded in hindsight."
+        ),
+        meta=(
+            f"{coverage['scored']} of {coverage['completed']} completed matches "
+            "have a verified pre-kickoff artifact &middot; artifacts are sealed "
+            "with SHA-256 manifests &middot; forecasts recorded after kickoff "
+            "are rejected automatically, not silently backfilled"
+        ),
+        stat_label="Log-loss skill vs. equal odds",
+        stat_value=stat_value,
+        stat_note=(
+            f"{summary['n']} pre-registered matches scored so far. Positive "
+            "means better than guessing &#8531; on each outcome."
+        ),
+        stat_tone=stat_tone,
+    )
 
 
 def _format_cutoff(cutoff_iso: str) -> str:
