@@ -621,6 +621,8 @@ tbody tr:hover {
 }
 
 .player-card {
+  display: flex;
+  flex-direction: column;
   padding: 15px;
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
@@ -631,8 +633,13 @@ tbody tr:hover {
 .player-card-head {
   display: flex;
   align-items: center;
+  min-height: 128px;
   gap: 12px;
   margin-bottom: 12px;
+}
+
+.player-card .attribute-panel {
+  margin-top: auto;
 }
 
 .player-photo,
