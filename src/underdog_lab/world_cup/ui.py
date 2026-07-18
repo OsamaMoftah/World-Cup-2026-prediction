@@ -523,14 +523,13 @@ def _player_card_html(rank: int, row: dict, *, rating_key: str, rating_label: st
     <div class="player-card">
       <div class="player-card-head">
         {player_photo_html(row["name"])}
-        <div class="ovr-badge estimated-attributes" title="Estimated from public player ratings; not licensed EA data">
+        <div class="ovr-badge estimated-attributes" title="Estimated {rating_label} from public player ratings; not licensed EA data">
           <span class="ovr-value">{row[rating_key]}</span>
-          <span class="ovr-label">EST. {rating_label}</span>
         </div>
         <div class="player-card-meta">
           <div class="player-rank">#{rank} shortlist position</div>
           <div class="player-name">{html.escape(row["name"])}</div>
-          <div class="player-team">{team_label(row["team"])} &middot; {html.escape(row["position"])}</div>
+          <div class="player-team">{team_label(row["team"])}</div>
         </div>
       </div>
       <div class="model-signal model-form">

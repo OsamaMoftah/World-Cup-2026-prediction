@@ -660,11 +660,9 @@ tbody tr:hover {
 
 .ovr-badge {
   box-sizing: border-box !important;
-  width: 58px !important;
-  flex-direction: column;
+  width: 52px !important;
+  height: 52px !important;
   flex-shrink: 0;
-  gap: 2px;
-  padding: 8px 4px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: #fff;
@@ -681,7 +679,6 @@ tbody tr:hover {
   line-height: 1;
 }
 
-.ovr-label,
 .player-rank {
   color: var(--ink-soft);
   font-family: 'Geist Mono', monospace !important;
@@ -689,10 +686,6 @@ tbody tr:hover {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.ovr-label {
-  color: var(--red-dark);
 }
 
 .model-form {
