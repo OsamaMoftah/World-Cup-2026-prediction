@@ -166,6 +166,36 @@ def _format_cutoff(cutoff_iso: str) -> str:
     return cutoff_iso[:16].replace("T", " ") + " UTC"
 
 
+BRAND_BALL_SVG = """
+<svg class="brand-ball" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+  <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.4"/>
+  <path d="M12,9 L14.85,11.07 L13.76,14.43 L10.24,14.43 L9.15,11.07 Z" fill="currentColor"/>
+  <path d="M12,9 L12,2.5 M14.85,11.07 L21.03,9.06 M13.76,14.43 L17.59,19.69
+           M10.24,14.43 L6.41,19.69 M9.15,11.07 L2.97,9.06"
+        stroke="currentColor" stroke-width="1.1" fill="none"/>
+</svg>
+"""
+
+
+def brand_bar_html() -> str:
+    """Compact site identity: ball mark + wordmark + year tag, sitting above
+    the hero on every tab. A small, self-contained inline SVG icon --
+    no image asset, no external request, styled to read as a line-art mark
+    rather than a decorative render."""
+    return f"""
+    <div class="brand-bar">
+      <div class="brand-mark">
+        {BRAND_BALL_SVG}
+        <div class="brand-word">
+          <span class="brand-title">World Cup 2026</span>
+          <span class="brand-sub">Forecaster</span>
+        </div>
+      </div>
+      <span class="brand-tag">2026</span>
+    </div>
+    """
+
+
 def hero_html(extractor_name: str, cutoff: str = "", overdue_note: str = "") -> str:
     meta_bits = []
     if cutoff:
@@ -178,6 +208,7 @@ def hero_html(extractor_name: str, cutoff: str = "", overdue_note: str = "") -> 
         else ""
     )
     return f"""
+    {brand_bar_html()}
     <section class="hero">
       <div class="eyebrow">FIFA World Cup 2026 · Forecast Dashboard</div>
       <h1>World Cup 2026 Forecaster</h1>

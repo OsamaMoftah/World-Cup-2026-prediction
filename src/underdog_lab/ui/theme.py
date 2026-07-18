@@ -72,6 +72,60 @@ footer {
   color: var(--ink);
 }
 
+/* Brand bar: compact site identity above the hero, every tab */
+.brand-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 0 2px;
+}
+
+.brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-ball {
+  flex-shrink: 0;
+  color: var(--red-dark);
+}
+
+.brand-word {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.brand-title {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.brand-sub {
+  color: var(--ink-soft);
+  font-family: 'Geist Mono', monospace !important;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.brand-tag {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--red);
+  color: #fff;
+  font-family: 'Geist Mono', monospace !important;
+  font-size: 11px;
+  font-weight: 800;
+}
+
 /* Hero */
 .hero {
   position: relative;
