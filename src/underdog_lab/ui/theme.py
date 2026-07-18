@@ -12,9 +12,9 @@ CSS = """
   --blue-dark: #12689d;
   --blue-soft: #e6f4fe;
   --blue-strong: #d2ecfc;
-  --red: #d63f4d;
-  --red-dark: #a92f3c;
-  --red-soft: #fff1f3;
+  --red: #c15b62;
+  --red-dark: #9c4a52;
+  --red-soft: #fbeeee;
   --amber: #c47a18;
   --slate: #4c6176;
   --radius-sm: 8px;
@@ -23,7 +23,7 @@ CSS = """
   --radius-xs: 6px;
   --radius-control: 8px;
   --radius-card: 12px;
-  --radius-pill: 999px;
+  --radius-pill: 10px;
 }
 
 * {
@@ -843,7 +843,7 @@ tbody tr:hover {
   margin-left: 4px;
   padding: 1px 7px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   color: var(--ink-soft);
   font-family: 'Geist Mono', monospace !important;
   font-size: 9px;
@@ -976,20 +976,45 @@ tbody tr:hover {
 
 /* Gradio chrome */
 .tabs {
-  border-bottom: 1px solid var(--line) !important;
+  border-bottom: none !important;
 }
 
-.tab-nav button,
-.tab-nav span {
+/* Real structural classes for this Gradio build: .tabs > .tab-wrapper (the
+   nav row) is a sibling of .tabitem (each tab's content), and every nav
+   button lives inside .tab-wrapper -- so this can never leak into a tab's
+   own content buttons. A restrained underline, not a pill, per the
+   editorial direction. */
+.tab-wrapper {
+  gap: 2px !important;
+  border-bottom: 1px solid var(--line-soft) !important;
+  background: transparent !important;
+}
+
+.tab-wrapper button,
+.tab-wrapper span {
+  padding: 12px 18px !important;
+  border: 0 !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
   color: var(--ink-soft) !important;
-  font-size: 15px !important;
-  font-weight: 700 !important;
+  font-size: 14.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  transition: color 150ms ease, border-color 150ms ease;
 }
 
-.tab-nav button.selected,
-.tab-nav span.selected {
+.tab-wrapper button:hover,
+.tab-wrapper span:hover {
   color: var(--ink) !important;
-  border-bottom-color: var(--red) !important;
+}
+
+.tab-wrapper button.selected,
+.tab-wrapper span.selected {
+  color: var(--ink) !important;
+  font-weight: 700 !important;
+  background: transparent !important;
+  border-bottom-color: var(--red-dark) !important;
 }
 
 button,
@@ -1287,8 +1312,8 @@ label,
 }
 
 .research-shell section.r-block {
-  max-width: 980px;
-  margin: 0 auto 44px;
+  max-width: 1140px;
+  margin: 0 auto 56px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -1297,11 +1322,11 @@ label,
 }
 
 .research-shell section.r-block:first-child {
-  margin-bottom: 30px;
+  margin-bottom: 36px;
 }
 
 .research-shell section.r-block + section.r-block {
-  padding-top: 32px;
+  padding-top: 40px;
   border-top: 1px solid var(--r-line);
 }
 
@@ -1340,11 +1365,15 @@ label,
   color: var(--r-slate);
 }
 
+/* Deliberately the one dark-toned surface on the page: a KPI card that
+   reads as a headline stat, not a form field. Every color inside is
+   picked for contrast against the dark fill -- never the default ink
+   text, which would be nearly invisible here. */
 .r-headstat {
   flex: 0 0 240px;
-  border: 1px solid var(--r-line);
+  border: 1px solid var(--r-ink);
   border-radius: var(--radius-sm);
-  background: var(--r-panel);
+  background: var(--r-ink);
   padding: 16px 20px;
 }
 
@@ -1354,7 +1383,7 @@ label,
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--r-slate);
+  color: rgba(255, 255, 255, 0.62);
 }
 
 .r-headstat .r-v {
@@ -1362,15 +1391,15 @@ label,
   font-size: 34px;
   line-height: 1.1;
   margin: 4px 0 3px;
-  color: var(--r-ink);
+  color: #fff;
 }
 
-.r-headstat .r-v.good { color: var(--r-green); }
-.r-headstat .r-v.bad { color: var(--r-red); }
+.r-headstat .r-v.good { color: #7bd9a5; }
+.r-headstat .r-v.bad { color: #e3949a; }
 
 .r-headstat .r-s {
   font-size: 12px;
-  color: var(--r-slate);
+  color: rgba(255, 255, 255, 0.72);
   line-height: 1.5;
 }
 
@@ -1410,7 +1439,7 @@ label,
 }
 
 .r-statrow > div {
-  padding: 14px 18px;
+  padding: 16px 20px;
   border-right: 1px solid var(--r-line-soft);
 }
 
@@ -1457,14 +1486,14 @@ label,
   text-transform: uppercase;
   color: var(--r-slate);
   text-align: left;
-  padding: 9px 13px;
+  padding: 11px 16px;
   border-bottom: 1px solid var(--r-line);
   font-weight: 700;
   background: var(--r-bg);
 }
 
 .research-shell table.r-table td {
-  padding: 9px 13px;
+  padding: 11px 16px;
   border-bottom: 1px solid var(--r-line-soft);
   color: var(--r-ink);
 }
@@ -1543,7 +1572,7 @@ label,
 .r-grid2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 28px;
+  gap: 36px;
 }
 
 .research-shell details.r-details {
@@ -1579,7 +1608,7 @@ label,
 .r-chip {
   display: inline-block;
   border: 1px solid var(--r-line);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 1px 9px;
   font-size: 10px;
   font-family: 'Geist Mono', monospace !important;
@@ -1590,7 +1619,7 @@ label,
 }
 
 .r-cta {
-  max-width: 980px !important;
+  max-width: 1140px !important;
   margin: 8px auto 0 !important;
   border: 1px solid var(--r-line) !important;
   background: var(--red-soft) !important;
@@ -1644,7 +1673,7 @@ button.r-cta-btn:hover {
   background: var(--r-panel);
   border-radius: var(--radius-sm);
   overflow: hidden;
-  max-width: 980px;
+  max-width: 1140px;
   margin: 0 auto 30px;
 }
 

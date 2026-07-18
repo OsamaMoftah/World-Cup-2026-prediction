@@ -168,11 +168,13 @@ def _format_cutoff(cutoff_iso: str) -> str:
 
 BRAND_BALL_SVG = """
 <svg class="brand-ball" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
-  <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.4"/>
-  <path d="M12,9 L14.85,11.07 L13.76,14.43 L10.24,14.43 L9.15,11.07 Z" fill="currentColor"/>
-  <path d="M12,9 L12,2.5 M14.85,11.07 L21.03,9.06 M13.76,14.43 L17.59,19.69
-           M10.24,14.43 L6.41,19.69 M9.15,11.07 L2.97,9.06"
-        stroke="currentColor" stroke-width="1.1" fill="none"/>
+  <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="1.3"/>
+  <path d="M3.6,9.2 C7.8,4.6 16.2,4.6 20.4,9.2" fill="none"
+        stroke="#2489c9" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M3.2,13.6 C7.6,18.6 16.4,18.6 20.8,13.6" fill="none"
+        stroke="#c15b62" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M8,7.4 C10.4,10.6 13.6,13.4 16,16.6" fill="none"
+        stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
 </svg>
 """
 
