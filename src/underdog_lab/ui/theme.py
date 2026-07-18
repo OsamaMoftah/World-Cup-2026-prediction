@@ -308,7 +308,6 @@ footer {
   margin-top: 14px;
   padding: 11px 13px;
   border: 1px solid var(--line-soft);
-  border-left: 3px solid var(--red);
   border-radius: var(--radius-sm);
   background: rgba(255, 250, 247, 0.72);
 }
@@ -637,20 +636,19 @@ tbody tr:hover {
 }
 
 .player-photo,
-.player-photo-fallback,
-.ovr-badge {
+.player-photo-fallback {
   box-sizing: border-box !important;
-  width: 58px !important;
-  height: 58px !important;
+  width: 66px !important;
+  height: 84px !important;
   flex-shrink: 0;
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   background: var(--blue-soft);
 }
 
 .player-photo {
   object-fit: cover;
-  object-position: 50% 20%;
+  object-position: 50% 12%;
 }
 
 .player-photo-fallback,
@@ -661,8 +659,15 @@ tbody tr:hover {
 }
 
 .ovr-badge {
+  box-sizing: border-box !important;
+  width: 58px !important;
   flex-direction: column;
-  background: var(--red-soft);
+  flex-shrink: 0;
+  gap: 2px;
+  padding: 8px 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
 }
 
 .estimated-attributes {
@@ -701,8 +706,7 @@ tbody tr:hover {
   gap: 8px;
   margin: 2px 0 10px;
   padding: 8px 10px;
-  border: 1px solid rgba(36, 137, 201, 0.34);
-  border-left: 4px solid var(--blue);
+  border: 1px solid rgba(36, 137, 201, 0.22);
   border-radius: var(--radius-sm);
   background: var(--blue-soft);
 }
@@ -764,9 +768,9 @@ tbody tr:hover {
 
 .attribute-panel {
   padding: 8px 10px 10px;
-  border: 1px solid rgba(214, 63, 77, 0.3);
+  border: 1px solid var(--line-soft);
   border-radius: var(--radius-sm);
-  background: rgba(255, 241, 243, 0.52);
+  background: rgba(247, 249, 252, 0.7);
   box-shadow: none;
 }
 
@@ -799,7 +803,6 @@ tbody tr:hover {
   margin-top: 14px;
   padding: 12px 14px;
   border: 1px solid var(--line-soft);
-  border-left: 3px solid var(--red);
   border-radius: var(--radius-sm);
   background: rgba(255, 250, 247, 0.8);
 }
@@ -836,7 +839,7 @@ tbody tr:hover {
 }
 
 .stat-methodology-item.model-form {
-  border-left-color: var(--blue);
+  border-left-color: var(--line);
 }
 
 .stat-methodology-item.model-form strong {
@@ -874,18 +877,35 @@ tbody tr:hover {
 }
 
 .stat-track {
-  height: 6px;
+  height: 7px;
   overflow: hidden;
   border-radius: 999px;
-  background: var(--blue-soft);
+  background: #e8edf4;
   box-shadow: none;
 }
 
 .stat-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--blue), var(--red));
+  background: var(--blue);
   box-shadow: none;
+}
+
+.stat-fill.tier-elite {
+  background: var(--blue-dark, #24547a);
+}
+
+.stat-fill.tier-weak {
+  background: #a9b6c6;
+}
+
+.stat-value.tier-elite {
+  color: var(--blue-dark, #24547a);
+  font-weight: 800;
+}
+
+.stat-value.tier-weak {
+  color: var(--ink-soft);
 }
 
 /* Gradio chrome */

@@ -501,12 +501,20 @@ def all_fixtures_html(repository: TournamentRepository) -> str:
     """
 
 
+def _stat_tier(value: int) -> str:
+    if value >= 85:
+        return "tier-elite"
+    if value < 60:
+        return "tier-weak"
+    return ""
+
+
 def _player_card_html(rank: int, row: dict, *, rating_key: str, rating_label: str) -> str:
     stat_cells = "".join(
         f"""
         <div class="stat-cell">
-          <div class="stat-top"><span class="stat-label">{label}</span><span class="stat-value">{row["attributes"][key]}</span></div>
-          <div class="stat-track"><div class="stat-fill" style="width:{row["attributes"][key]}%"></div></div>
+          <div class="stat-top"><span class="stat-label">{label}</span><span class="stat-value {_stat_tier(row["attributes"][key])}">{row["attributes"][key]}</span></div>
+          <div class="stat-track"><div class="stat-fill {_stat_tier(row["attributes"][key])}" style="width:{row["attributes"][key]}%"></div></div>
         </div>
         """
         for key, label in card_attributes(row)
