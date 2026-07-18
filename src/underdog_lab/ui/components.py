@@ -214,13 +214,14 @@ def hero_html(extractor_name: str, cutoff: str = "", overdue_note: str = "") -> 
     <section class="hero">
       <div class="eyebrow">FIFA World Cup 2026 · Forecast Dashboard</div>
       <h1>World Cup 2026 Forecaster</h1>
-      <p>Every group match, a full tournament simulation, and a sandbox where
-      you can drop in a headline like "star striker is out" and watch the
-      odds move.</p>
-      <p class="small">Built on Elo ratings and a statistical model, checked
-      against a decade of real results. This is a hobby project, not betting
-      advice or an official FIFA product. The <strong>Methodology</strong>
-      tab has the full breakdown if you're curious.</p>
+      <p>Forecasts for all 72 group-stage matches, a Monte Carlo simulation
+      of the full bracket, and a scenario tool: describe a team-news update
+      and see exactly how much the model's probabilities move.</p>
+      <p class="small">The model is Elo ratings feeding a Dixon-Coles
+      scoring distribution, fitted on 11,000+ international matches and
+      backtested before this tournament started. Independent project, not
+      affiliated with FIFA. The <strong>Methodology</strong> tab has the
+      fit, the backtest, and where the model gets it wrong.</p>
       {meta_html}
       <div class="metric-strip">
         <span class="metric-pill"><strong>Coverage</strong> 48 teams · 72 group matches</span>
