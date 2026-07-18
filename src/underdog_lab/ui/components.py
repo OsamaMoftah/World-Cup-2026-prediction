@@ -67,14 +67,15 @@ def research_stat_row_html(
     return f'<div class="r-statrow">{"".join(cells)}</div>'
 
 
-def research_cta_html(title: str, subtitle: str, label: str) -> str:
+def research_cta_html(title: str, subtitle: str) -> str:
+    """Text half of a Research-tab call to action. Pair with a real
+    ``gr.Button(elem_classes="r-cta-btn")`` inside a
+    ``gr.Row(elem_classes="r-cta")`` so the action actually switches tabs —
+    a CTA that only looks clickable is worse than no CTA."""
     return f"""
-    <div class="r-cta">
-      <div>
-        <div class="r-cta-title">{html.escape(title)}</div>
-        <div class="r-cta-sub">{html.escape(subtitle)}</div>
-      </div>
-      <div class="r-cta-btn">{html.escape(label)} &rarr;</div>
+    <div>
+      <div class="r-cta-title">{html.escape(title)}</div>
+      <div class="r-cta-sub">{html.escape(subtitle)}</div>
     </div>
     """
 

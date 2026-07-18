@@ -45,13 +45,7 @@ body,
 .gradio-container {
   min-height: 100vh;
   color: var(--ink);
-  background:
-    linear-gradient(rgba(36, 137, 201, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(36, 137, 201, 0.055) 1px, transparent 1px),
-    radial-gradient(circle at 92% 5%, rgba(214, 63, 77, 0.12), transparent 28%),
-    radial-gradient(circle at 8% 0%, rgba(36, 137, 201, 0.14), transparent 32%),
-    var(--paper);
-  background-size: 32px 32px, 32px 32px, auto, auto, auto;
+  background: var(--paper);
 }
 
 .gradio-container,
@@ -83,14 +77,11 @@ footer {
   position: relative;
   overflow: hidden;
   margin: 0 0 22px;
-  padding: 42px clamp(22px, 4vw, 56px);
+  padding: 38px clamp(22px, 4vw, 52px);
   border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background:
-    linear-gradient(135deg, rgba(255,255,255,0.97), rgba(255,255,255,0.88)),
-    radial-gradient(circle at 88% 35%, rgba(214,63,77,0.16), transparent 30%),
-    radial-gradient(circle at 78% 72%, rgba(36,137,201,0.16), transparent 34%);
-  box-shadow: 0 14px 34px rgba(18, 104, 157, 0.10);
+  border-radius: var(--radius-md);
+  background: #fff;
+  box-shadow: none;
 }
 
 .hero::before {
@@ -106,8 +97,8 @@ footer {
   position: absolute;
   right: clamp(18px, 4vw, 56px);
   bottom: 18px;
-  color: rgba(18, 104, 157, 0.08);
-  font: 800 clamp(64px, 10vw, 136px)/1 var(--font-display, 'Geist');
+  color: rgba(18, 104, 157, 0.05);
+  font: 800 clamp(56px, 8vw, 112px)/1 var(--font-display, 'Geist');
   letter-spacing: -0.08em;
   pointer-events: none;
 }
@@ -992,6 +983,39 @@ label,
   font-weight: 650 !important;
 }
 
+/* Gradio's Soft theme renders every field label as a filled pill (light
+   blue chip). Flatten it site-wide to a plain caption above the control. */
+.gradio-container {
+  --block-label-background-fill: transparent !important;
+  --block-label-border-color: transparent !important;
+  --block-label-border-width: 0px !important;
+  --block-label-text-color: var(--ink-soft) !important;
+  --block-label-shadow: none !important;
+  --block-label-radius: 0 !important;
+  --block-label-text-size: 13px !important;
+  --block-label-margin: 0 !important;
+  --block-label-padding: 0 !important;
+}
+
+/* Only the block's own caption span, never a per-choice radio/checkbox
+   option label (those live inside a nested .wrap > label > span and must
+   keep their normal case and weight). Radio/Checkbox captions are a direct
+   span child of the fieldset; Dropdown/Textbox/Slider captions sit inside
+   an extra wrapper div (class "container") one level down. */
+.gradio-container .block > span,
+.gradio-container .block > .container > span,
+.gradio-container .block .svelte-jdcl7l {
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: var(--ink-soft) !important;
+}
+
 .prose,
 .markdown,
 .md {
@@ -1170,6 +1194,38 @@ label,
 .research-shell .score-box {
   border-color: var(--r-line);
   background: var(--r-panel);
+}
+
+/* Flatten the app's skeuomorphic 3D button (bold color + drop-shadow lip)
+   to a plain solid/outline pair when it appears on a research page. */
+.research-shell .primary-button {
+  border: 1px solid var(--r-red) !important;
+  background: var(--r-red) !important;
+  box-shadow: none !important;
+  border-radius: 6px !important;
+}
+
+.research-shell .primary-button:hover {
+  transform: none;
+  background: #a92f3c !important;
+  box-shadow: none !important;
+}
+
+.research-shell .secondary-button {
+  border: 1px solid var(--r-line) !important;
+  background: #fff !important;
+  border-radius: 6px !important;
+}
+
+.research-shell button:not(.primary-button):not(.secondary-button) {
+  border-radius: 6px !important;
+}
+
+.research-shell input,
+.research-shell textarea,
+.research-shell select {
+  border-color: var(--r-line) !important;
+  border-radius: 6px !important;
 }
 
 .research-shell .score-box strong {
@@ -1480,16 +1536,16 @@ label,
 }
 
 .r-cta {
-  max-width: 980px;
-  margin: 8px auto 0;
-  border: 1px solid var(--r-line);
-  background: var(--red-soft);
-  border-radius: var(--radius-sm);
-  padding: 18px 22px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
+  max-width: 980px !important;
+  margin: 8px auto 0 !important;
+  border: 1px solid var(--r-line) !important;
+  background: var(--red-soft) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 18px 22px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  flex-wrap: wrap !important;
 }
 
 .r-cta .r-cta-title {
@@ -1503,15 +1559,27 @@ label,
   color: var(--r-slate);
 }
 
-.r-cta .r-cta-btn {
-  margin-left: auto;
-  background: var(--r-red);
-  color: #fff;
-  font-weight: 700;
-  font-size: 13.5px;
-  padding: 10px 18px;
-  border-radius: 6px;
+/* The CTA action is a real gr.Button(elem_classes="r-cta-btn") so it can
+   switch tabs; style it to read as the same rounded action pill regardless
+   of Gradio's own button chrome. */
+button.r-cta-btn {
+  flex-shrink: 0;
+  margin-left: auto !important;
+  background: var(--r-red) !important;
+  border: 1px solid var(--r-red) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  font-size: 13.5px !important;
+  padding: 10px 18px !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
   white-space: nowrap;
+  width: auto !important;
+}
+
+button.r-cta-btn:hover {
+  background: var(--r-ink) !important;
+  border-color: var(--r-ink) !important;
 }
 
 /* Beat the Model — progress stepper */
@@ -1578,13 +1646,6 @@ label,
 .r-step .r-d {
   font-size: 10.5px;
   color: var(--r-slate);
-}
-
-/* Research subnav — restrained underline instead of pill tabs, applied to
-   Gradio's own tab bar wherever a research page is the active surface. */
-.research-shell ~ .tab-nav button.selected,
-.research-shell ~ .tab-nav span.selected {
-  border-bottom-color: var(--red-dark) !important;
 }
 
 @media (max-width: 760px) {

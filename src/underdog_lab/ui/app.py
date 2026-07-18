@@ -538,23 +538,7 @@ def track_record_html(repository) -> str:
         retrospective_details,
     )
 
-    cta = research_cta_html(
-        "Think you can do better?",
-        "Predict historical matches with exactly the information the model had.",
-        "Beat the Model",
-    )
-
-    return (
-        '<div class="research-shell">'
-        + intro
-        + section1
-        + section2
-        + section3
-        + section4
-        + section5
-        + cta
-        + "</div>"
-    )
+    return intro + section1 + section2 + section3 + section4 + section5
 
 
 def model_summary_html() -> str:
@@ -820,7 +804,7 @@ with gr.Blocks(title="World Cup 2026 Forecaster") as demo:
     with gr.Accordion("How this works", open=False):
         gr.Markdown(how_it_works_summary_markdown())
 
-    with gr.Tabs():
+    with gr.Tabs() as main_tabs:
         with gr.Tab("World Cup 2026"):
             with gr.Row():
                 world_cup_mode = gr.Radio(
@@ -962,7 +946,7 @@ with gr.Blocks(title="World Cup 2026 Forecaster") as demo:
         with gr.Tab("Player Awards"):
             gr.HTML(awards_html(world_cup_repository, world_cup_probabilities))
 
-        with gr.Tab(VISITOR_COPY["challenge_title"]):
+        with gr.Tab(VISITOR_COPY["challenge_title"], id="beat_the_model"):
             with gr.Column(elem_classes="research-shell"):
                 gr.HTML(challenge_intro_html(match_count=len(labels)))
                 with gr.Column(elem_classes="challenge-panel"):
@@ -1067,15 +1051,62 @@ with gr.Blocks(title="World Cup 2026 Forecaster") as demo:
                         outputs=reveal_card,
                     )
 
-        with gr.Tab(VISITOR_COPY["evidence_title"]):
-            gr.HTML(track_record_html(world_cup_repository))
+                with gr.Row(elem_classes="r-cta"):
+                    gr.HTML(
+                        research_cta_html(
+                            "Ready for the real evidence?",
+                            "See how every one of the model's own forecasts scored "
+                            "this summer, not just these 20 historical picks.",
+                        )
+                    )
+                    beat_model_to_evidence = gr.Button(
+                        "Read the Evidence →", elem_classes="r-cta-btn"
+                    )
+                beat_model_to_evidence.click(
+                    lambda: gr.Tabs(selected="evidence"),
+                    outputs=main_tabs,
+                )
+
+        with gr.Tab(VISITOR_COPY["evidence_title"], id="evidence"):
+            with gr.Column(elem_classes="research-shell"):
+                gr.HTML(track_record_html(world_cup_repository))
+                with gr.Row(elem_classes="r-cta"):
+                    gr.HTML(
+                        research_cta_html(
+                            "Think you can do better?",
+                            "Predict historical matches with exactly the "
+                            "information the model had.",
+                        )
+                    )
+                    evidence_to_beat_model = gr.Button(
+                        "Beat the Model →", elem_classes="r-cta-btn"
+                    )
+                evidence_to_beat_model.click(
+                    lambda: gr.Tabs(selected="beat_the_model"),
+                    outputs=main_tabs,
+                )
 
         with gr.Tab("Compare with other forecasters"):
-            gr.HTML(
-                tournament_comparison_html(
-                    world_cup_probabilities, world_cup_repository
+            with gr.Column(elem_classes="research-shell"):
+                gr.HTML(
+                    tournament_comparison_html(
+                        world_cup_probabilities, world_cup_repository
+                    )
                 )
-            )
+                with gr.Row(elem_classes="r-cta"):
+                    gr.HTML(
+                        research_cta_html(
+                            "Numbers are easy to compare, hard to earn.",
+                            "See how every one of our forecasts was sealed and scored.",
+                        )
+                    )
+                    compare_to_evidence = gr.Button(
+                        "Read the Evidence →", elem_classes="r-cta-btn"
+                    )
+                compare_to_evidence.click(
+                    lambda: gr.Tabs(selected="evidence"),
+                    outputs=main_tabs,
+                )
 
         with gr.Tab("Methodology"):
             gr.Markdown(how_it_works_markdown())

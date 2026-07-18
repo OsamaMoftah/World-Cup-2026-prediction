@@ -14,7 +14,6 @@ from functools import lru_cache
 from pathlib import Path
 
 from underdog_lab.ui.components import (
-    research_cta_html,
     research_hero_html,
     research_section_html,
 )
@@ -217,14 +216,7 @@ def tournament_comparison_html(probabilities: dict, repository) -> str:
         )
         section_number += 1
 
-    sections.append(
-        research_cta_html(
-            "Numbers are easy to compare, hard to earn.",
-            "See how every one of our forecasts was sealed and scored.",
-            "Read the Evidence",
-        )
-    )
-    return '<div class="research-shell">' + "".join(sections) + "</div>"
+    return "".join(sections)
 
 
 def tournament_benchmark_html(repository) -> str:
