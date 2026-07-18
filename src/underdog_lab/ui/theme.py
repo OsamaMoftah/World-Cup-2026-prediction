@@ -1398,6 +1398,10 @@ label,
 .r-hero-main {
   flex: 1 1 420px;
   min-width: 0;
+  background: var(--r-panel);
+  border: 1px solid var(--r-line);
+  border-radius: var(--radius-sm);
+  padding: 22px 26px;
 }
 
 .r-hero h1 {

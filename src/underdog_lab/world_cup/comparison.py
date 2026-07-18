@@ -97,9 +97,10 @@ def tournament_comparison_html(probabilities: dict, repository) -> str:
     external = load_external_forecasts()
     title_data = external.get("tournament_title")
     group_data = external.get("group_stage")
-    source_count = sum(1 for data in (title_data, group_data) if data)
+    odds_data = external.get("title_odds_partial")
+    source_count = sum(1 for data in (title_data, group_data, odds_data) if data)
     source_names = ", ".join(
-        html.escape(data["label"]) for data in (title_data, group_data) if data
+        html.escape(data["label"]) for data in (title_data, group_data, odds_data) if data
     )
     snapshot_dates = sorted(
         {data.get("captured_at", "") for data in (title_data, group_data) if data}
@@ -172,6 +173,42 @@ def tournament_comparison_html(probabilities: dict, repository) -> str:
                 section_number,
                 "Who lifts the trophy?",
                 f"{html.escape(title_data['label'])}'s pre-tournament title probabilities vs. our live model.",
+                body,
+            )
+        )
+        section_number += 1
+
+    if odds_data:
+        rows = []
+        for team, american in odds_data["odds_american"].items():
+            implied = 100.0 / (american + 100.0)
+            our_probability = probabilities.get(team, {}).get("champion", 0.0)
+            rows.append(
+                f"<tr><td>{team_label(team)}</td>"
+                f"<td class='r-num'>+{american}</td>"
+                f"<td class='r-num'>{implied:.1%}</td>"
+                f"<td class='r-num'>{our_probability:.1%}</td></tr>"
+            )
+        body = f"""
+        <table class="r-table">
+          <thead><tr><th>Team</th>
+          <th class="r-num">Opening odds</th>
+          <th class="r-num">Implied probability</th>
+          <th class="r-num">Our model<br><span style="font-weight:400">live today</span></th></tr></thead>
+          <tbody>{''.join(rows)}</tbody>
+        </table>
+        <div class="r-src">{html.escape(odds_data.get('note', ''))} Source:
+        <a href="{html.escape(odds_data['url'])}" target="_blank" rel="noopener">{html.escape(odds_data['source'])}</a>,
+        captured {html.escape(odds_data.get('captured_at', ''))}.</div>
+        """
+        sections.append(
+            research_section_html(
+                section_number,
+                "A third check: the opening betting line",
+                "Pre-tournament market pricing, converted from American odds "
+                "to implied probability. Only two teams' opening lines are "
+                "still published, so this is a spot-check, not a full-field "
+                "table like the two above.",
                 body,
             )
         )

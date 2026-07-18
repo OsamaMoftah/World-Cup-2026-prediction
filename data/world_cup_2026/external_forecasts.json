@@ -19,6 +19,17 @@
       "Canada": 0.004
     }
   },
+  "title_odds_partial": {
+    "label": "ESPN Bet / DraftKings opening line",
+    "source": "ESPN Bet / DraftKings Sportsbook",
+    "url": "https://www.espn.com/espn/betting/story/_/id/48386952/espn-soccer-futbol-world-cup-betting-odds-championship-groups",
+    "captured_at": "pre-tournament (mid-June 2026)",
+    "note": "This is a rolling odds page that gets overwritten as the tournament progresses; only two teams' opening lines are still quoted on it, not a full field.",
+    "odds_american": {
+      "Spain": 450,
+      "Argentina": 950
+    }
+  },
   "group_stage": {
     "label": "RotoWire Team Projections",
     "source": "RotoWire",
