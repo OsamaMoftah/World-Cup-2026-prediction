@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import random
 from collections import Counter, defaultdict
-from underdog_lab.forecasting.poisson import poisson_probability
 from underdog_lab.world_cup.bracket import KNOCKOUT_PATH, build_round_of_32
 from underdog_lab.world_cup.data import TournamentRepository
 from underdog_lab.world_cup.forecasting import (
+    calibrated_scoreline_matrix,
     knockout_advance_probability,
     match_forecast,
 )
@@ -13,14 +13,31 @@ from underdog_lab.world_cup.models import Standing
 from underdog_lab.world_cup.standings import rank_standings
 
 
-def _sample_goals(rate: float, rng: random.Random) -> int:
-    threshold = rng.random()
+def _scoreline_sampler(forecast) -> list[tuple[float, int, int]]:
+    """Cumulative distribution over (home_goals, away_goals) scorelines.
+
+    Sampling the joint Dixon-Coles matrix (rather than two independent
+    Poisson draws) keeps the simulated draw rate consistent with the fitted
+    low-score correlation and the calibrated 1X2 probabilities.
+    """
     cumulative = 0.0
-    for goals in range(9):
-        cumulative += poisson_probability(goals, rate)
+    table = []
+    for i, row in enumerate(calibrated_scoreline_matrix(forecast)):
+        for j, probability in enumerate(row):
+            cumulative += probability
+            table.append((cumulative, i, j))
+    return table
+
+
+def _sample_scoreline(
+    table: list[tuple[float, int, int]],
+    rng: random.Random,
+) -> tuple[int, int]:
+    threshold = rng.random() * table[-1][0]
+    for cumulative, home_goals, away_goals in table:
         if threshold <= cumulative:
-            return goals
-    return 8
+            return home_goals, away_goals
+    return table[-1][1], table[-1][2]
 
 
 def _apply_result(table, home, away, home_goals, away_goals):
@@ -78,6 +95,13 @@ def simulate_tournament(
     rng = random.Random(seed)
     counts = defaultdict(Counter)
     groups = sorted({team.group for team in repository.teams})
+    samplers: dict[str, list[tuple[float, int, int]]] = {}
+    for group in groups:
+        for fixture in repository.group_fixtures(group):
+            if not fixture.played:
+                samplers[fixture.fixture_id] = _scoreline_sampler(
+                    match_forecast(fixture, repository.team_by_name)
+                )
     group_by_team = {team.team: team.group for team in repository.teams}
     fifa_ranks = {team.team: team.rank for team in repository.teams}
 
@@ -93,9 +117,9 @@ def simulate_tournament(
                     home_goals = fixture.home_goals or 0
                     away_goals = fixture.away_goals or 0
                 else:
-                    forecast = match_forecast(fixture, repository.team_by_name)
-                    home_goals = _sample_goals(forecast.lambda_home, rng)
-                    away_goals = _sample_goals(forecast.lambda_away, rng)
+                    home_goals, away_goals = _sample_scoreline(
+                        samplers[fixture.fixture_id], rng
+                    )
                 _apply_result(
                     table,
                     fixture.home,

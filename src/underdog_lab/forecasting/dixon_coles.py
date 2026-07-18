@@ -32,17 +32,58 @@ def match_probability(home_goals: int, away_goals: int, lambda_home: float, lamb
     return tau * poisson_probability(home_goals, lambda_home) * poisson_probability(away_goals, lambda_away)
 
 
+def scoreline_matrix(
+    lambda_home: float,
+    lambda_away: float,
+    rho: float,
+    max_score: int = MAX_SCORE,
+) -> list[list[float]]:
+    """Joint scoreline distribution, normalized over the truncated score grid."""
+    matrix = [
+        [max(0.0, match_probability(i, j, lambda_home, lambda_away, rho)) for j in range(max_score + 1)]
+        for i in range(max_score + 1)
+    ]
+    total = sum(sum(row) for row in matrix) or 1.0
+    return [[cell / total for cell in row] for row in matrix]
+
+
+def rescale_matrix_to_outcomes(
+    matrix: list[list[float]],
+    p_home: float,
+    p_draw: float,
+    p_away: float,
+) -> list[list[float]]:
+    """Rescale a scoreline matrix so its win/draw/loss regions sum to the
+    given outcome probabilities. Keeps within-region scoreline ratios intact,
+    which lets a post-hoc calibrated 1X2 forecast stay consistent with the
+    scoreline distribution shown next to it."""
+    size = len(matrix)
+    raw = {"home": 0.0, "draw": 0.0, "away": 0.0}
+    for i in range(size):
+        for j in range(size):
+            region = "home" if i > j else "draw" if i == j else "away"
+            raw[region] += matrix[i][j]
+    target = {"home": p_home, "draw": p_draw, "away": p_away}
+    return [
+        [
+            matrix[i][j]
+            * (
+                target["home" if i > j else "draw" if i == j else "away"]
+                / (raw["home" if i > j else "draw" if i == j else "away"] or 1.0)
+            )
+            for j in range(size)
+        ]
+        for i in range(size)
+    ]
+
+
 def forecast_from_lambdas_dc(
     lambda_home: float,
     lambda_away: float,
     rho: float,
     max_score: int = MAX_SCORE,
 ) -> Forecast:
-    matrix = [
-        [max(0.0, match_probability(i, j, lambda_home, lambda_away, rho)) for j in range(max_score + 1)]
-        for i in range(max_score + 1)
-    ]
-    total = sum(sum(row) for row in matrix)
+    matrix = scoreline_matrix(lambda_home, lambda_away, rho, max_score)
 
     p_home = sum(
         matrix[i][j]
@@ -51,7 +92,7 @@ def forecast_from_lambdas_dc(
         if i > j
     )
     p_draw = sum(matrix[i][i] for i in range(max_score + 1))
-    p_away = total - p_home - p_draw
+    p_away = 1.0 - p_home - p_draw
 
     best_i, best_j = max(
         (
@@ -65,9 +106,9 @@ def forecast_from_lambdas_dc(
     return Forecast(
         lambda_home=lambda_home,
         lambda_away=lambda_away,
-        p_home=p_home / total,
-        p_draw=p_draw / total,
-        p_away=p_away / total,
+        p_home=p_home,
+        p_draw=p_draw,
+        p_away=p_away,
         most_likely_score=f"{best_i}-{best_j}",
     )
 
@@ -80,16 +121,9 @@ def top_scorelines_dc(
     max_score: int = MAX_SCORE,
     limit: int = 3,
 ) -> list[tuple[str, float]]:
-    matrix = [
-        [
-            max(0.0, match_probability(i, j, lambda_home, lambda_away, rho))
-            for j in range(max_score + 1)
-        ]
-        for i in range(max_score + 1)
-    ]
-    total = sum(sum(row) for row in matrix) or 1.0
+    matrix = scoreline_matrix(lambda_home, lambda_away, rho, max_score)
     scorelines = [
-        (f"{i}-{j}", matrix[i][j] / total)
+        (f"{i}-{j}", matrix[i][j])
         for i in range(max_score + 1)
         for j in range(max_score + 1)
     ]

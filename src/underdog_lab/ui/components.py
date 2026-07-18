@@ -6,6 +6,7 @@ from underdog_lab.domain import Forecast, MatchRecord
 from underdog_lab.forecasting.scoring import brier_score, log_loss
 from underdog_lab.scenarios.schemas import AdjustmentResult, ScenarioExtraction
 from underdog_lab.world_cup.flags import team_label
+from underdog_lab.world_cup.forecasting import top_scorelines
 
 
 def visitor_tab_copy() -> dict[str, str]:
@@ -143,14 +144,17 @@ def forecast_html(
             </div>
             """
         )
+    best_score, best_score_probability = top_scorelines(forecast, limit=1)[0]
     return f"""
     <section class="forecast-card">
       <div class="eyebrow">{html.escape(title)}</div>
       {''.join(rows)}
       <div class="forecast-note">
         Expected goals: {match.home_team} {forecast.lambda_home:.2f},
-        {match.away_team} {forecast.lambda_away:.2f}. Most likely score:
-        {forecast.most_likely_score}.
+        {match.away_team} {forecast.lambda_away:.2f}.
+        Most likely single scoreline: {best_score} ({best_score_probability:.0%})
+        &mdash; the mode of the exact-score distribution, not the match call;
+        the outcome probabilities above are the forecast.
       </div>
     </section>
     """

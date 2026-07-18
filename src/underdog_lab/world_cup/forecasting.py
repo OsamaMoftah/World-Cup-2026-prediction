@@ -5,7 +5,8 @@ import math
 from underdog_lab.forecasting.calibration import apply_temperature
 from underdog_lab.forecasting.dixon_coles import (
     DixonColesEloModel,
-    top_scorelines_dc,
+    rescale_matrix_to_outcomes,
+    scoreline_matrix,
 )
 from underdog_lab.world_cup.models import TournamentFixture, TournamentTeam
 
@@ -66,14 +67,36 @@ def knockout_advance_probability(
     elo_probability = 1.0 / (
         1.0 + math.pow(10.0, (away_team.rating - home_team.rating) / 400.0)
     )
+    # 0.35 is a stated prior, not a fitted value: favorites convert less of
+    # their regulation edge once a tie reaches extra time and penalties
+    # (shootouts are close to a coin flip), so the Elo edge is damped rather
+    # than applied at full strength. Fitting this on historical knockout
+    # resolutions is tracked as post-tournament work.
     draw_resolution = 0.5 + 0.35 * (elo_probability - 0.5)
     return forecast.p_home + forecast.p_draw * draw_resolution
 
 
-def top_scorelines(forecast, limit: int = 3) -> list[tuple[str, float]]:
-    return top_scorelines_dc(
-        forecast.lambda_home,
-        forecast.lambda_away,
-        MODEL.rho,
-        limit=limit,
+def calibrated_scoreline_matrix(forecast) -> list[list[float]]:
+    """Scoreline distribution rescaled to agree with the forecast's 1X2.
+
+    Temperature calibration adjusts p_home/p_draw/p_away after the score
+    matrix is built, so the raw Dixon-Coles scorelines no longer sum to the
+    displayed outcome probabilities. Rescaling each win/draw/loss region to
+    the calibrated mass restores that consistency without disturbing the
+    ranking of scorelines within a region.
+    """
+    matrix = scoreline_matrix(forecast.lambda_home, forecast.lambda_away, MODEL.rho)
+    return rescale_matrix_to_outcomes(
+        matrix, forecast.p_home, forecast.p_draw, forecast.p_away
     )
+
+
+def top_scorelines(forecast, limit: int = 3) -> list[tuple[str, float]]:
+    matrix = calibrated_scoreline_matrix(forecast)
+    scorelines = [
+        (f"{i}-{j}", probability)
+        for i, row in enumerate(matrix)
+        for j, probability in enumerate(row)
+    ]
+    scorelines.sort(key=lambda item: item[1], reverse=True)
+    return scorelines[:limit]

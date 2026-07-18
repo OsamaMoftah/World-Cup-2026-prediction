@@ -1,10 +1,26 @@
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+
+# The guard scripts import underdog_lab; run them with src/ on PYTHONPATH so
+# a missing editable install fails the guard assertion, not the import.
+_SCRIPT_ENV = {
+    **os.environ,
+    "PYTHONPATH": os.pathsep.join(
+        filter(
+            None,
+            [
+                str(Path(__file__).resolve().parents[2] / "src"),
+                os.environ.get("PYTHONPATH"),
+            ],
+        )
+    ),
+}
 
 
 def test_generate_synthetic_data_rejects_frozen_test_without_flag():
@@ -14,10 +30,14 @@ def test_generate_synthetic_data_rejects_frozen_test_without_flag():
         [sys.executable, str(script), "--split", "test", "--count", "1", "--seed", "9999"],
         capture_output=True,
         text=True,
+        env=_SCRIPT_ENV,
     )
     assert result.returncode != 0, (
         "generate_synthetic_data.py must reject --split test without "
         "--allow-overwrite-test"
+    )
+    assert "allow-overwrite-test" in result.stderr, (
+        f"expected the frozen-test-split guard, got: {result.stderr}"
     )
 
 
@@ -41,6 +61,7 @@ def test_generate_synthetic_data_allows_test_with_flag():
             ],
             capture_output=True,
             text=True,
+            env=_SCRIPT_ENV,
         )
         assert result.returncode == 0, (
             f"--allow-overwrite-test must permit test generation: {result.stderr}"
