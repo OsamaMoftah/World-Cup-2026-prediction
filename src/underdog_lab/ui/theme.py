@@ -990,6 +990,38 @@ tbody tr:hover {
   background: transparent !important;
 }
 
+/* Beat the Model and Methodology are real Tabs (5th and 6th) so their
+   content gets full-page layout, but they're reached only through the
+   "How this works" launch buttons or the in-page cross-links -- never
+   through the visible nav row. */
+.tab-wrapper .tab-container > button:nth-child(5),
+.tab-wrapper .tab-container > button:nth-child(6) {
+  display: none !important;
+}
+
+/* "How this works" launch buttons */
+.how-it-works-launch-row {
+  gap: 12px !important;
+  margin-top: 8px !important;
+}
+
+button.how-it-works-launch-btn {
+  border: 1px solid var(--blue) !important;
+  background: #fff !important;
+  color: var(--blue-dark) !important;
+  font-weight: 700 !important;
+  font-size: 13.5px !important;
+  padding: 10px 16px !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  width: auto !important;
+}
+
+button.how-it-works-launch-btn:hover {
+  background: var(--blue-soft) !important;
+  border-color: var(--blue-dark) !important;
+}
+
 /* "How this works" accordion header: styled as an inviting entry point to
    the Beat the Model challenge and the methodology write-up nested inside
    it, not a plain disclosure strip. */

@@ -802,133 +802,18 @@ with gr.Blocks(title="World Cup 2026 Forecaster") as demo:
     )
 
     with gr.Accordion(
-        "How this works — Beat the Model & Methodology",
+        "How this works",
         open=False,
         elem_classes="gr-accordion",
     ) as how_it_works_accordion:
         gr.Markdown(how_it_works_summary_markdown())
-
-        with gr.Tabs() as how_it_works_tabs:
-            with gr.Tab(VISITOR_COPY["challenge_title"], id="beat_the_model"):
-                with gr.Column(elem_classes="research-shell"):
-                    gr.HTML(challenge_intro_html(match_count=len(labels)))
-                    with gr.Column(elem_classes="challenge-panel"):
-                        match_selector = gr.Dropdown(
-                            choices=labels,
-                            value=labels[0],
-                            label="Choose a past match",
-                            info="The final score is hidden until you commit your forecast.",
-                        )
-                        match_card = gr.HTML(match_html(initial_match))
-                        baseline_card = gr.HTML(
-                            forecast_html(initial_baseline, initial_match, "Baseline forecast")
-                        )
-
-                        scenario = gr.Textbox(
-                            label="Add evidence before kickoff",
-                            placeholder=(
-                                "Example: Argentina's first-choice striker is confirmed out."
-                            ),
-                            lines=3,
-                        )
-                        with gr.Row():
-                            analyze_button = gr.Button(
-                                "Apply evidence", variant="primary", elem_classes="primary-button"
-                            )
-                            clear_button = gr.ClearButton(
-                                [scenario], value="Clear", elem_classes="secondary-button"
-                            )
-
-                        factors_card = gr.HTML(
-                            factors_html(
-                                ScenarioExtraction(),
-                                apply_extraction(initial_match, ScenarioExtraction()),
-                            )
-                        )
-                        adjusted_card = gr.HTML(
-                            forecast_html(
-                                initial_baseline, initial_match, "Scenario forecast"
-                            )
-                        )
-
-                        gr.Markdown("### Commit probabilities")
-                        with gr.Row():
-                            user_home = gr.Slider(
-                                0, 100, value=45, step=1, label="Home win %"
-                            )
-                            user_draw = gr.Slider(
-                                0, 100, value=25, step=1, label="Draw %"
-                            )
-                            user_away = gr.HTML(derived_away_html(45, 25))
-                        reveal_button = gr.Button(
-                            "Commit forecast and reveal result",
-                            variant="primary",
-                            elem_classes="primary-button",
-                        )
-                        reveal_card = gr.HTML()
-
-                        match_selector.change(
-                            select_match,
-                            inputs=match_selector,
-                            outputs=[
-                                match_id_state,
-                                baseline_state,
-                                adjusted_state,
-                                match_card,
-                                baseline_card,
-                                factors_card,
-                                adjusted_card,
-                                reveal_card,
-                                user_away,
-                            ],
-                        )
-                        analyze_button.click(
-                            run_scenario,
-                            inputs=[match_selector, scenario],
-                            outputs=[adjusted_state, factors_card, adjusted_card, reveal_card],
-                        )
-                        scenario.submit(
-                            run_scenario,
-                            inputs=[match_selector, scenario],
-                            outputs=[adjusted_state, factors_card, adjusted_card, reveal_card],
-                        )
-                        user_home.change(
-                            update_user_forecast,
-                            inputs=[user_home, user_draw],
-                            outputs=user_away,
-                        )
-                        user_draw.change(
-                            update_user_forecast,
-                            inputs=[user_home, user_draw],
-                            outputs=user_away,
-                        )
-                        reveal_button.click(
-                            reveal,
-                            inputs=[
-                                match_selector,
-                                baseline_state,
-                                adjusted_state,
-                                user_home,
-                                user_draw,
-                            ],
-                            outputs=reveal_card,
-                        )
-
-                    with gr.Row(elem_classes="r-cta"):
-                        gr.HTML(
-                            research_cta_html(
-                                "Ready for the real evidence?",
-                                "See how every one of the model's own forecasts scored "
-                                "this summer, not just these 20 historical picks.",
-                            )
-                        )
-                        beat_model_to_evidence = gr.Button(
-                            "Read the Evidence →", elem_classes="r-cta-btn"
-                        )
-
-            with gr.Tab("Methodology", id="methodology"):
-                gr.Markdown(how_it_works_markdown())
-                gr.HTML(methodology_html())
+        with gr.Row(elem_classes="how-it-works-launch-row"):
+            beat_model_launch = gr.Button(
+                "Try Beat the Model →", elem_classes="how-it-works-launch-btn"
+            )
+            methodology_launch = gr.Button(
+                "Read the Methodology →", elem_classes="how-it-works-launch-btn"
+            )
 
     with gr.Tabs() as main_tabs:
         with gr.Tab("World Cup 2026"):
@@ -1109,16 +994,153 @@ with gr.Blocks(title="World Cup 2026 Forecaster") as demo:
                     outputs=main_tabs,
                 )
 
+        # These two are deliberately last and have no visible nav button
+        # (hidden in theme.py by tab position) -- the only way in is the
+        # "Try Beat the Model" / "Read the Methodology" buttons inside the
+        # "How this works" accordion, or the cross-links below. Keeping
+        # them as real, full-width Tabs (rather than nested inside the
+        # accordion) means their content gets the same layout as every
+        # other research page instead of being squeezed into a collapsed
+        # strip.
+        with gr.Tab(VISITOR_COPY["challenge_title"], id="beat_the_model"):
+            with gr.Column(elem_classes="research-shell"):
+                gr.HTML(challenge_intro_html(match_count=len(labels)))
+                with gr.Column(elem_classes="challenge-panel"):
+                    match_selector = gr.Dropdown(
+                        choices=labels,
+                        value=labels[0],
+                        label="Choose a past match",
+                        info="The final score is hidden until you commit your forecast.",
+                    )
+                    match_card = gr.HTML(match_html(initial_match))
+                    baseline_card = gr.HTML(
+                        forecast_html(initial_baseline, initial_match, "Baseline forecast")
+                    )
+
+                    scenario = gr.Textbox(
+                        label="Add evidence before kickoff",
+                        placeholder=(
+                            "Example: Argentina's first-choice striker is confirmed out."
+                        ),
+                        lines=3,
+                    )
+                    with gr.Row():
+                        analyze_button = gr.Button(
+                            "Apply evidence", variant="primary", elem_classes="primary-button"
+                        )
+                        clear_button = gr.ClearButton(
+                            [scenario], value="Clear", elem_classes="secondary-button"
+                        )
+
+                    factors_card = gr.HTML(
+                        factors_html(
+                            ScenarioExtraction(),
+                            apply_extraction(initial_match, ScenarioExtraction()),
+                        )
+                    )
+                    adjusted_card = gr.HTML(
+                        forecast_html(
+                            initial_baseline, initial_match, "Scenario forecast"
+                        )
+                    )
+
+                    gr.Markdown("### Commit probabilities")
+                    with gr.Row():
+                        user_home = gr.Slider(
+                            0, 100, value=45, step=1, label="Home win %"
+                        )
+                        user_draw = gr.Slider(
+                            0, 100, value=25, step=1, label="Draw %"
+                        )
+                        user_away = gr.HTML(derived_away_html(45, 25))
+                    reveal_button = gr.Button(
+                        "Commit forecast and reveal result",
+                        variant="primary",
+                        elem_classes="primary-button",
+                    )
+                    reveal_card = gr.HTML()
+
+                    match_selector.change(
+                        select_match,
+                        inputs=match_selector,
+                        outputs=[
+                            match_id_state,
+                            baseline_state,
+                            adjusted_state,
+                            match_card,
+                            baseline_card,
+                            factors_card,
+                            adjusted_card,
+                            reveal_card,
+                            user_away,
+                        ],
+                    )
+                    analyze_button.click(
+                        run_scenario,
+                        inputs=[match_selector, scenario],
+                        outputs=[adjusted_state, factors_card, adjusted_card, reveal_card],
+                    )
+                    scenario.submit(
+                        run_scenario,
+                        inputs=[match_selector, scenario],
+                        outputs=[adjusted_state, factors_card, adjusted_card, reveal_card],
+                    )
+                    user_home.change(
+                        update_user_forecast,
+                        inputs=[user_home, user_draw],
+                        outputs=user_away,
+                    )
+                    user_draw.change(
+                        update_user_forecast,
+                        inputs=[user_home, user_draw],
+                        outputs=user_away,
+                    )
+                    reveal_button.click(
+                        reveal,
+                        inputs=[
+                            match_selector,
+                            baseline_state,
+                            adjusted_state,
+                            user_home,
+                            user_draw,
+                        ],
+                        outputs=reveal_card,
+                    )
+
+                with gr.Row(elem_classes="r-cta"):
+                    gr.HTML(
+                        research_cta_html(
+                            "Ready for the real evidence?",
+                            "See how every one of the model's own forecasts scored "
+                            "this summer, not just these 20 historical picks.",
+                        )
+                    )
+                    beat_model_to_evidence = gr.Button(
+                        "Read the Evidence →", elem_classes="r-cta-btn"
+                    )
+
+        with gr.Tab("Methodology", id="methodology"):
+            gr.Markdown(how_it_works_markdown())
+            gr.HTML(methodology_html())
+
     # Cross-tab links wired here (not inline) so each button can reference
-    # main_tabs / how_it_works_accordion / how_it_works_tabs regardless of
-    # which one was defined first in the layout above.
+    # main_tabs / how_it_works_accordion regardless of which one was
+    # defined first in the layout above.
+    beat_model_launch.click(
+        lambda: (gr.Tabs(selected="beat_the_model"), gr.Accordion(open=False)),
+        outputs=[main_tabs, how_it_works_accordion],
+    )
+    methodology_launch.click(
+        lambda: (gr.Tabs(selected="methodology"), gr.Accordion(open=False)),
+        outputs=[main_tabs, how_it_works_accordion],
+    )
     evidence_to_beat_model.click(
-        lambda: (gr.Accordion(open=True), gr.Tabs(selected="beat_the_model")),
-        outputs=[how_it_works_accordion, how_it_works_tabs],
+        lambda: gr.Tabs(selected="beat_the_model"),
+        outputs=main_tabs,
     )
     beat_model_to_evidence.click(
-        lambda: (gr.Tabs(selected="evidence"), gr.Accordion(open=False)),
-        outputs=[main_tabs, how_it_works_accordion],
+        lambda: gr.Tabs(selected="evidence"),
+        outputs=main_tabs,
     )
 
 demo.queue(default_concurrency_limit=2)
