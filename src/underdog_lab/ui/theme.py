@@ -985,9 +985,32 @@ tbody tr:hover {
    own content buttons. A restrained underline, not a pill, per the
    editorial direction. */
 .tab-wrapper {
-  gap: 2px !important;
+  gap: 28px !important;
   border-bottom: 1px solid var(--line-soft) !important;
   background: transparent !important;
+}
+
+/* "How this works" accordion header: styled as an inviting entry point to
+   the Beat the Model challenge and the methodology write-up nested inside
+   it, not a plain disclosure strip. */
+.gr-accordion > .label-wrap {
+  padding: 14px 18px !important;
+  border-radius: var(--radius-sm) !important;
+  border: 1px solid rgba(36, 137, 201, 0.28) !important;
+  background: var(--blue-soft) !important;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.gr-accordion > .label-wrap:hover {
+  background: var(--blue-strong) !important;
+  border-color: var(--blue) !important;
+}
+
+.gr-accordion > .label-wrap span {
+  color: var(--blue-dark) !important;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.005em;
 }
 
 .tab-wrapper button,
@@ -1074,6 +1097,9 @@ label,
   --block-label-text-size: 13px !important;
   --block-label-margin: 0 !important;
   --block-label-padding: 0 !important;
+  --checkbox-label-background-fill-selected: var(--blue-soft) !important;
+  --checkbox-label-border-color-selected: var(--blue) !important;
+  --checkbox-label-text-color-selected: var(--blue-dark) !important;
 }
 
 /* Only the block's own caption span, never a per-choice radio/checkbox
