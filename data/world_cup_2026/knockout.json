@@ -1,8 +1,8 @@
 {
   "schema_version": "knockout-v1",
   "provider": "espn",
-  "fetched_at": "2026-07-17T23:21:44.112244+00:00",
-  "raw_response_sha256": "3fc080ca8fc5a282479062feed174a0ef77b26d759ad9c3395595d3373903c88",
+  "fetched_at": "2026-07-19T08:44:04.206885+00:00",
+  "raw_response_sha256": "a3d39d7f169c419d4d8793e8878e25be223207342e44fbe634a02524275b1d26",
   "matches": [
     {
       "fixture_id": "WC26-073",
@@ -432,11 +432,11 @@
       "kickoff_utc": "2026-07-18T21:00:00+00:00",
       "home": "France",
       "away": "England",
-      "home_goals": null,
-      "away_goals": null,
-      "winner": null,
+      "home_goals": 4,
+      "away_goals": 6,
+      "winner": "England",
       "provider_match_id": "760516",
-      "provider_status": "STATUS_SCHEDULED"
+      "provider_status": "STATUS_FULL_TIME"
     },
     {
       "fixture_id": "WC26-104",
@@ -453,5 +453,5 @@
       "provider_status": "STATUS_SCHEDULED"
     }
   ],
-  "raw_response_path": "data/world_cup_2026/result_updates/espn-knockout-20260717T232144Z.json"
+  "raw_response_path": "data/world_cup_2026/result_updates/espn-knockout-20260719T084404Z.json"
 }

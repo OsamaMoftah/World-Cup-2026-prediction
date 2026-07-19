@@ -73,12 +73,13 @@ jobs:
           PYTHONPATH=src:. pytest
           PYTHONPATH=src python scripts/track_record_summary.py
       - name: Build PR summary
-        if: steps.fetch.outputs.changed == 'true'
+        if: steps.fetch.outputs.changed == 'true' || steps.knockout.outputs.changed == 'true'
         run: |
           python - <<'PY'
           import json, os
           path = os.environ["UPDATE_PATH"]
           data = json.load(open(path)) if path and os.path.exists(path) else {}
+          knockout_changed = os.environ["KNOCKOUT_CHANGED"] == "true"
           with open("/tmp/result-pr.md", "w") as out:
               out.write("Automated World Cup result and bracket update.\n\n")
               out.write(f"- Additions: {len(data.get('results', []))}\n")
@@ -89,9 +90,12 @@ jobs:
                   out.write(f"- Add `{row['fixture_id']}`: {row['home']} {row['home_goals']}-{row['away_goals']} {row['away']}\n")
               for row in data.get("corrections", []):
                   out.write(f"- **Correction** `{row['fixture_id']}`: {row['previous_home_goals']}-{row['previous_away_goals']} -> {row['home_goals']}-{row['away_goals']}\n")
+              if knockout_changed:
+                  out.write("- Knockout bracket refreshed from the canonical ESPN payload (see `data/world_cup_2026/knockout.json`).\n")
           PY
         env:
           UPDATE_PATH: ${{ steps.fetch.outputs.output }}
+          KNOCKOUT_CHANGED: ${{ steps.knockout.outputs.changed }}
       - name: Open or update result PR
         if: steps.fetch.outputs.changed == 'true' || steps.knockout.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v8
