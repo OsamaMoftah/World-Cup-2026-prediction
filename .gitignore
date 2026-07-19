@@ -11,3 +11,4 @@ data/traces/*.jsonl
 models/*.gguf
 models/*-merged/
 models/merged/
+.claude/
