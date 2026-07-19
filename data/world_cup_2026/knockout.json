@@ -1,8 +1,8 @@
 {
   "schema_version": "knockout-v1",
   "provider": "espn",
-  "fetched_at": "2026-07-19T08:44:04.206885+00:00",
-  "raw_response_sha256": "a3d39d7f169c419d4d8793e8878e25be223207342e44fbe634a02524275b1d26",
+  "fetched_at": "2026-07-19T19:36:22.858437+00:00",
+  "raw_response_sha256": "32e9bcfeb9108ea753b9f1b96630c35fe5de81893e6ca3475f0c6c9da32babb7",
   "matches": [
     {
       "fixture_id": "WC26-073",
@@ -450,8 +450,8 @@
       "away_goals": null,
       "winner": null,
       "provider_match_id": "760517",
-      "provider_status": "STATUS_SCHEDULED"
+      "provider_status": "STATUS_IN_PROGRESS"
     }
   ],
-  "raw_response_path": "data/world_cup_2026/result_updates/espn-knockout-20260719T084404Z.json"
+  "raw_response_path": "data/world_cup_2026/result_updates/espn-knockout-20260719T193622Z.json"
 }
