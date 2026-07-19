@@ -1143,4 +1143,4 @@ with gr.Blocks(title="World Cup 2026 Forecaster") as demo:
         outputs=main_tabs,
     )
 
-demo.queue(default_concurrency_limit=2)
+demo.queue(default_concurrency_limit=8)
