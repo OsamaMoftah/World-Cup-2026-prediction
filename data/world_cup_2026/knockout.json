@@ -1,8 +1,8 @@
 {
   "schema_version": "knockout-v1",
   "provider": "espn",
-  "fetched_at": "2026-07-19T08:44:04.206885+00:00",
-  "raw_response_sha256": "a3d39d7f169c419d4d8793e8878e25be223207342e44fbe634a02524275b1d26",
+  "fetched_at": "2026-07-20T11:12:30.009876+00:00",
+  "raw_response_sha256": "b833952813fa559f2f9e6bbc753909d5c6d1a80d02536e7871afe6637aae2eca",
   "matches": [
     {
       "fixture_id": "WC26-073",
@@ -446,12 +446,12 @@
       "kickoff_utc": "2026-07-19T19:00:00+00:00",
       "home": "Spain",
       "away": "Argentina",
-      "home_goals": null,
-      "away_goals": null,
-      "winner": null,
+      "home_goals": 1,
+      "away_goals": 0,
+      "winner": "Spain",
       "provider_match_id": "760517",
-      "provider_status": "STATUS_SCHEDULED"
+      "provider_status": "STATUS_FINAL_AET"
     }
   ],
-  "raw_response_path": "data/world_cup_2026/result_updates/espn-knockout-20260719T084404Z.json"
+  "raw_response_path": "data/world_cup_2026/result_updates/espn-knockout-20260720T111230Z.json"
 }
