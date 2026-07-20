@@ -218,17 +218,18 @@ def test_host_flag_does_not_apply_an_ungated_rating_boost():
     assert mexico.rating == mexico.elo
 
 
-def test_upcoming_html_reports_live_knockout_stage():
+def test_upcoming_html_reports_completed_tournament():
     repository = TournamentRepository()
     html = upcoming_html(repository, mode="compact")
 
-    assert "What the model predicts next" in html
-    # Both finalists are resolved in the checked-in bracket, so the final
-    # must appear as a direct fixture card with knockout context — never as
-    # a stale "conditional final" scenario for an already-played semifinal.
+    # The final (Match 104) is resolved in the checked-in bracket, so there
+    # are no unplayed fixtures left to forecast. The panel must say so
+    # honestly instead of showing stale "what's next" or conditional-final
+    # copy for a tournament that has already ended.
+    assert "No unplayed fixture remains" in html
+    assert "Track Record tab" in html
+    assert "What the model predicts next" not in html
     assert "Conditional final" not in html
-    assert "Match 104" in html
-    assert "to advance" in html
 
 
 def test_confidence_tiers_distinguish_signal_strength():

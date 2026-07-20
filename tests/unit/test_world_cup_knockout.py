@@ -16,7 +16,7 @@ def test_repository_exposes_group_and_knockout_fixture_sets():
     )
 
 
-def test_repository_reflects_played_semifinals_and_resolved_final():
+def test_repository_reflects_played_semifinals_and_final():
     repository = TournamentRepository()
 
     semifinal_1 = next(
@@ -46,7 +46,10 @@ def test_repository_reflects_played_semifinals_and_resolved_final():
     assert final.stage == "final"
     assert final.home == "Spain"
     assert final.away == "Argentina"
-    assert not final.played
+    assert final.played
+    assert (final.home_goals, final.away_goals) == (1, 0)
+    assert final.winner == "Spain"
+    assert final.provider_status == "STATUS_FINAL_AET"
 
 
 def test_knockout_fixture_rejects_invalid_match_number():
